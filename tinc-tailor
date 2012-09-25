@@ -1,0 +1,402 @@
+#!/usr/bin/env python
+
+from os import walk, path, remove
+from argparse import ArgumentParser, REMAINDER
+from paramiko import SSHClient
+from logging import getLogger, DEBUG, StreamHandler, Formatter, INFO,\
+    getLevelName, WARNING
+from copy import copy
+from stat import S_ISDIR, S_ISREG, S_ISLNK
+from errno import ENOENT
+
+class TailorException(Exception):
+    pass
+
+class UnknownOSException(TailorException):
+    def __init__(self, os):
+        self.os = os
+    def __str__(self):
+        return "Unknown operating systgem {os}".format(os=self.os)
+
+class TooManyHostsException(TailorException):
+    def __str__(self):
+        return "tinc-tailor can only handle 256 hosts"
+
+class CommandFailedException(TailorException):
+    def __init__(self, return_code):
+        self.return_code = return_code
+    def __str__(self):
+        return "Command returned {return_code}".format(return_code=self.return_code)
+
+#
+# Classes for managing individual hosts
+#
+
+class Host(object):
+    def __init__(self, hostname, properties={}):
+        self.logger = getLogger('tailor.host.' + hostname)
+        self.logger.info("Adding host '%s'", hostname)
+        self.hostname = hostname.replace('-','_')
+        self.client = SSHClient()
+        self.client.load_system_host_keys()
+        self.client.connect(hostname, username='root')
+        self.sftp = self.client.open_sftp()
+        self.properties = self.get_properties()
+        self.properties.update(properties)
+        
+    def async_command(self, command):
+        return self.client.exec_command(command)
+    
+    def sync_command(self, command):
+        chan = self.client.get_transport().open_session()
+        chan.setblocking(True)
+        chan.set_combine_stderr(True)
+        chan.exec_command(command)
+        for line in chan.makefile():
+            self.logger.debug(line)
+        chan.recv_exit_status()
+        if chan.exit_status is not 0:
+            raise CommandFailedException(chan.exit_status)
+        return chan.exit_status
+    
+    def interpolate(self, string):
+        return string.format(**self.properties)
+    
+    def get_properties(self):
+         debian_properties = {
+            'preinstall_command': 'apt-get -y update',
+            'install_command': 'apt-get -y install',
+            'remove_command': 'apt-get -y remove',
+            'tinc_package': 'tinc'
+         }
+         redhat_properties = {
+            'preinstall_command': 'yum -y install http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm',
+            'install_command': 'yum -y install',
+            'remove_command': 'yum -y remove',
+            'tinc_package': 'tinc'
+         }
+         stdout = self.async_command('cat /etc/issue')[1]
+         first = stdout.readline()
+         stdout.close()
+         if first.find("Debian") is not -1:
+             properties = debian_properties
+         elif first.find("Redhat") is not -1:
+             properties = redhat_properties
+         elif first.find("CentOS") is not -1:
+             properties = redhat_properties
+         else:
+             raise UnknownOSException(first)
+         properties['hostname'] = self.hostname
+         
+         return properties
+
+class Hostlist(object):
+    def __init__(self,filename='hosts.list', properties={}):
+        self.filename = filename
+        self.logger = getLogger('tailor.hostlist')
+        if filename is None:
+            self.hosts=[]
+        else:
+            self.logger.debug("Loading hosts from '%s'", filename)
+            self.hosts = [Host(line.strip(), properties) for line in open(filename).readlines()]
+        hostlist = [host.hostname for host in self.hosts]
+        net = 33
+        hostnum = 1
+        for host in self.hosts:
+            host.properties['connect_to_list'] = "\n".join('ConnectTo = ' + other_host for other_host in hostlist if other_host is not host.hostname)
+            host.properties['private_ipv4_subnet'] = '192.168.'+str(net)+'.'+ str(hostnum)+'/32'
+            host.properties['private_ipv4_address'] = '192.168.'+str(net)+'.'+ str(hostnum)
+            host.properties['private_ipv4_cidr'] = '192.168.'+str(net)+'.'+ str(hostnum)+'/24'
+            host.properties['private_ipv4_netmask'] = '255.255.255.0'
+            hostnum += 1
+            if hostnum >= 255:
+                raise TooManyHostsException()
+    
+    def run_action(self, action):
+        return [action.run(host) for host in self.hosts]
+    
+    def subset(self, filter_hosts):
+        newlist = Hostlist(None)
+        newlist.hosts = [host for host in self.hosts if host.hostname in filter_hosts]
+        if len(newlist) is not len(filter_hosts):
+            raise TailorException()
+        return newlist
+    
+    def filter(self, filter_hosts):
+        self.hosts = [host for host in self.hosts if host.hostname not in filter_hosts]
+    
+    def __len__(self):
+        return len(self.hosts)
+    
+    def __iter__(self):
+        return iter(self.hosts)
+
+#
+# Classes for doing things to hosts
+#
+
+class Action(object):
+    def __init__(self):
+        self.logger = getLogger('tailor.action.' + self.__class__.__name__)
+        
+    def run(self, host):
+        pass
+ 
+class Try(Action):
+    def __init__(self, action, log_level=WARNING):
+        super(Try, self).__init__()
+        self.action = action
+        self.log_level = log_level
+    
+    def run(self, host):
+        try:
+            self.action.run(host)
+        except:
+            self.action.logger.log(self.log_level,'Try Action failed', exc_info=True)
+    
+class Command(Action):
+    def __init__(self, command):
+        super(Command, self).__init__()
+        self.command = command
+        
+    def run(self, host):
+        command = host.interpolate(self.command)
+        self.logger.info("Running command '%s' on host '%s'", command, host.hostname)
+        host.sync_command(command)
+    
+class Preinstall(Command):
+    def __init__(self):
+        super(Preinstall, self).__init__('{preinstall_command}')
+    
+class Install(Command):
+    def __init__(self, package):
+        super(Install, self).__init__('{install_command} '+package)
+    
+class Ping(Command):
+    def __init__(self, host):
+        super(Ping, self).__init__('ping -c 1 -q '+host.properties['private_ipv4_address'])
+    
+class Uninstall(Command):
+    def __init__(self, package):
+        super(Uninstall, self).__init__('{remove_command} '+package)
+        
+class GetFile(Action):
+    def __init__(self, remotename, localname):
+        super(GetFile, self).__init__()
+        self.remotename = remotename
+        self.localname = localname
+        
+    def run(self, host):
+        remotename = host.interpolate(self.remotename)
+        self.logger.info("Fetching file '%s' from host '%s'", remotename, host.hostname)
+        host.sftp.get(remotename, host.interpolate(self.localname))
+
+class Mkdir(Action):
+    def __init__(self, dir):
+        super(Mkdir, self).__init__()
+        self.dir = dir
+        
+    def run(self, host):
+        dir = host.interpolate(self.dir)
+        self.logger.info("Making directory '%s' on host '%s'", dir, host.hostname)
+        host.sftp.mkdir(dir)
+
+class Rmdir(Action):
+    def __init__(self, dir):
+        super(Rmdir, self).__init__()
+        self.dir = dir
+    
+    def recursive_remove(self,host, dir):
+        for attr in host.sftp.listdir_attr(dir):
+            if S_ISDIR(attr.st_mode):
+                self.recursive_remove(host, path.join(dir,attr.filename))
+            elif S_ISREG(attr.st_mode) or S_ISLNK(attr.st_mode):
+                host.sftp.remove(path.join(dir,attr.filename))
+            else:
+                raise IOError("Cannot remove remote file:" + str(attr))
+        host.sftp.rmdir(dir)
+    
+    def run(self, host):
+        dir = host.interpolate(self.dir)
+        self.logger.info("Removing directory '%s' on host '%s'", dir, host.hostname)
+        self.recursive_remove(host, dir)
+
+class Rm(Action):
+    def __init__(self, file):
+        super(Rm, self).__init__()
+        self.file = file
+        
+    def run(self, host):
+        file = host.interpolate(self.file)
+        self.logger.info("Removing file '%s' on host '%s'", file, host.hostname)
+        host.sftp.remove(file)
+
+class PutFile(Action):
+    def __init__(self,localname, remotename, interpolate = False):
+        super(PutFile, self).__init__()
+        self.remotename = remotename
+        self.localname = localname
+        self.interpolate = interpolate
+        
+    def run(self, host):
+        remotename = host.interpolate(self.remotename)
+        localname = host.interpolate(self.localname)
+        self.logger.info("Sending file '%s' to '%s' on host '%s'", localname, remotename , host.hostname)
+        if self.interpolate:
+            remote = host.sftp.open(remotename, mode='w')
+            with open(localname, 'r') as local:
+                for line in local:
+                    remote.write(host.interpolate(line))
+        else:
+            host.sftp.put(localname, remotename)
+
+            
+class ActionList(Action):
+    def __init__(self):
+        super(ActionList, self).__init__()
+        self.actions = []
+        
+    def run(self, host):
+        self.logger.debug("running %d actions", len(self.actions))
+        [action.run(host) for action in self.actions]
+
+class PutDir(ActionList):
+    def __init__(self,localname, remotename):
+        self.localname = localname
+        self.remotename = remotename
+        self.walked = False
+    
+    def run(self, host):
+        if not self.walked:
+            self.walk()
+            self.walked = True
+        super(PutDir,self).run(host)
+    
+    def walk(self):
+        super(PutDir, self).__init__()
+        self.logger.debug("listing %s", self.localname)
+        for (dirpath, dirnames, filenames) in walk(self.localname):
+            remotedir = path.join(self.remotename, path.relpath(dirpath, self.localname))
+            self.actions.append(Try(Mkdir(remotedir)))
+            self.logger.debug("Mkdir %s", remotedir)
+            for filename in filenames:
+                fromfile = path.join(dirpath, filename)
+                tofile = path.join(remotedir, filename)
+                self.actions.append(PutFile(fromfile, tofile))
+                self.logger.debug("Putfile %s %s", fromfile, tofile)
+
+#
+# Business Logic
+#
+
+class Tailor(object):
+    def __init__(self, netname):
+        self.hosts = Hostlist(properties={'netname': netname})
+    
+    def install(self, hostnames=None):
+        actions = [
+            Preinstall(),
+            Install('{tinc_package}'),
+            Try(Mkdir('/etc/tinc/'), DEBUG),
+            Mkdir('/etc/tinc/{netname}'),
+            Mkdir('/etc/tinc/{netname}/hosts'),
+            PutFile('nets.boot', '/etc/tinc/nets.boot', True),
+            PutFile('tinc.conf', '/etc/tinc/{netname}/tinc.conf', True),
+            PutFile('host.conf', '/etc/tinc/{netname}/hosts/{hostname}', True),
+            Command("tincd -n {netname} -K4096"),
+            GetFile('/etc/tinc/cf/hosts/{hostname}', 'hosts/{hostname}')
+        ]
+        if hostnames is None:
+            hosts = self.hosts
+        else:
+            hosts = self.hosts.subset(hostnames)
+        [hosts.run_action(action) for action in actions]
+        
+    def remove(self, hostnames=None):
+        actions = [
+            Uninstall('{tinc_package}'),
+            Try(Rmdir('/etc/tinc/{netname}')),
+            Try(Rm('/etc/tinc/nets.boot')),
+            Command("! pgrep -f '^tincd -n {netname}' || pkill -9 -f '^tincd -n {netname}'"),
+        ]
+        if hostnames is None:
+            hosts = self.hosts
+        else:
+            hosts = self.hosts.subset(hostnames)
+        for host in hosts:
+            try:
+                remove(host.interpolate('hosts/{hostname}'))
+            except OSError as e:
+                if e.errno is not ENOENT:
+                    raise
+        [hosts.run_action(action) for action in actions]
+        if hostnames is None:
+            self.hosts.hosts = []
+        else:
+            self.hosts.filter(hostnames)
+    
+    def refresh(self):
+        actions = [
+            PutFile('tinc.conf', '/etc/tinc/{netname}/tinc.conf', True),
+            PutDir('hosts/', '/etc/tinc/{netname}/hosts/'),
+            Command('pkill -SIGHUP -f "^tincd -n {netname}" || tincd -n {netname}'),
+            Try(Command('ip addr flush {netname} '), INFO),
+            Command('ip addr add {private_ipv4_cidr} dev {netname}'),
+            Command('ip link set {netname} up')
+        ]
+        [self.hosts.run_action(action) for action in actions]
+        
+    def test(self):
+        actions = [Ping(target_host) for target_host in self.hosts]
+        [self.hosts.run_action(action) for action in actions]
+            
+    
+class ColoredConsoleHandler(StreamHandler):
+    def emit(self, record):
+        # Need to make a actual copy of the record
+        # to prevent altering the message for other loggers
+        myrecord = copy(record)
+        levelno = myrecord.levelno
+        if(levelno >= 50):  # CRITICAL / FATAL
+            color = '\x1b[31m'  # red
+        elif(levelno >= 40):  # ERROR
+            color = '\x1b[31m'  # red
+        elif(levelno >= 30):  # WARNING
+            color = '\x1b[33m'  # yellow
+        elif(levelno >= 20):  # INFO
+            color = '\x1b[32m'  # green
+        elif(levelno >= 10):  # DEBUG
+            color = '\x1b[35m'  # pink
+        else:  # NOTSET and anything else
+            color = '\x1b[0m'  # normal
+        myrecord.msg = color + str(myrecord.msg) + '\x1b[0m'  # normal
+        StreamHandler.emit(self, myrecord)
+
+if __name__ == '__main__':
+    parser = ArgumentParser(description='Install tinc on a set of servers.')
+    parser.add_argument('--netname', type=str, nargs=1, default=['cf'], help='Tinc netname')
+    parser.add_argument('--log-level', nargs=1, default=[WARNING], help='Level log detail to log')
+    parser.add_argument('--global-log-level', nargs=1, default=[None], help='Level log all messages')
+    parser.add_argument('command', nargs='?', default=None, choices=['install','remove','test'])
+    parser.add_argument('remainder', nargs=REMAINDER)
+    (params, remaining) = parser.parse_known_args()
+    root = getLogger('')
+    if params.global_log_level[0] is not None:
+        root.setLevel(params.global_log_level[0])
+    handler = ColoredConsoleHandler()
+    handler.setFormatter(Formatter('%(name)s: %(message)s'))
+    root.addHandler(handler)
+    logger = getLogger('tailor')
+    logger.setLevel(params.log_level[0])
+    logger.debug("Starting tailor")
+    t = Tailor(netname=params.netname[0])
+    if params.command == 'install':
+        t.install(params.remainder)
+        t.refresh()
+    elif params.command == 'remove':
+        t.remove(params.remainder)
+        t.refresh()
+    elif params.command == 'test':
+        t.test()
+    else:
+        t.refresh()
