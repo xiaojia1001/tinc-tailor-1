@@ -28,6 +28,11 @@ command reference
    This removes the given hosts from the cluster, and removes tinc from them.
    The hosts should be removed from `hosts.list` after this is run.
 
+*  `tinc-tailor refresh`
+
+   This reconfigures all hosts in `hosts.list` and ensures tincd is running on
+   them.
+
 *  `tinc-tailor test`
 
    This makes every host in `hosts.list` ping every other host by their private
@@ -69,7 +74,13 @@ Adding an extra node:
 
 Removing the first node:
 
+    $ ./tinc-tailor remove node2.publicnetwork.com
     $ cat > host.list
     node1.publicnetwork.com
     ondemand.cloudprovider.com
-    $ ./tinc-tailor remove node2.publicnetwork.com
+
+Running a command on all the nodes:
+
+    $ ./tinc-tailor run uname -r
+    tailor.host.node1.publicnetwork.com: 2.6.32-279.5.2.el6.x86_64
+    tailor.host.ondemand.cloudprovider.com: 2.6.32-5-amd64
