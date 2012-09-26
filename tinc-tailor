@@ -53,7 +53,7 @@ class Host(object):
         chan.set_combine_stderr(True)
         chan.exec_command(command)
         for line in chan.makefile():
-            self.logger.debug(line)
+            self.logger.debug(line.strip())
         chan.recv_exit_status()
         if chan.exit_status is not 0:
             raise CommandFailedException(chan.exit_status)
@@ -349,6 +349,9 @@ class Tailor(object):
     def test(self):
         actions = [Ping(target_host) for target_host in self.hosts]
         [self.hosts.run_action(action) for action in actions]
+        
+    def run(self, command):
+        self.hosts.run_action(Command(command))
             
     
 class ColoredConsoleHandler(StreamHandler):
@@ -377,7 +380,7 @@ if __name__ == '__main__':
     parser.add_argument('--netname', type=str, nargs=1, default=['cf'], help='Tinc netname')
     parser.add_argument('--log-level', nargs=1, default=[WARNING], help='Level log detail to log')
     parser.add_argument('--global-log-level', nargs=1, default=[None], help='Level log all messages')
-    parser.add_argument('command', nargs='?', default=None, choices=['install','remove','test'])
+    parser.add_argument('command', nargs='?', default=None, choices=['install','remove','test','run'])
     parser.add_argument('remainder', nargs=REMAINDER)
     (params, remaining) = parser.parse_known_args()
     root = getLogger('')
@@ -398,5 +401,13 @@ if __name__ == '__main__':
         t.refresh()
     elif params.command == 'test':
         t.test()
+    elif params.command == 'run':
+        hosthandler = StreamHandler()
+        hosthandler.setFormatter(Formatter('%(name)s: %(message)s'))
+        hostlogger = getLogger('tailor.host')
+        root.removeHandler(handler)
+        hostlogger.addHandler(hosthandler)
+        hostlogger.setLevel(DEBUG)
+        t.run(" ".join(params.remainder))
     else:
         t.refresh()

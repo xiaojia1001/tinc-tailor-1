@@ -32,6 +32,10 @@ command reference
 
    This makes every host in `hosts.list` ping every other host by their private
    address
+
+*  `tinc-tailor run *command*`
+
+    This runs *command* on every host in `hosts.list`.
    
 
 options
