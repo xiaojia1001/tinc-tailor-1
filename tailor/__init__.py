@@ -62,32 +62,32 @@ class Host(object):
         return string.format(**self.properties)
     
     def get_properties(self):
-         debian_properties = {
-            'preinstall_command': 'apt-get -y update',
-            'install_command': 'apt-get -y install',
-            'remove_command': 'apt-get -y remove',
-            'tinc_package': 'tinc'
-         }
-         redhat_properties = {
-            'preinstall_command': 'yum -y install http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm',
-            'install_command': 'yum -y install',
-            'remove_command': 'yum -y remove',
-            'tinc_package': 'tinc'
-         }
-         stdout = self.async_command('cat /etc/issue').makefile('r')
-         first = stdout.readline()
-         stdout.close()
-         if first.find("Debian") is not -1:
-             properties = debian_properties
-         elif first.find("Redhat") is not -1:
-             properties = redhat_properties
-         elif first.find("CentOS") is not -1:
-             properties = redhat_properties
-         else:
-             raise UnknownOSException(first)
-         properties['hostname'] = self.hostname
-         
-         return properties
+        debian_properties = {
+           'preinstall_command': 'apt-get -y update',
+           'install_command': 'apt-get -y install',
+           'remove_command': 'apt-get -y remove',
+           'tinc_package': 'tinc'
+        }
+        redhat_properties = {
+           'preinstall_command': 'yum -y install http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm',
+           'install_command': 'yum -y install',
+           'remove_command': 'yum -y remove',
+           'tinc_package': 'tinc'
+        }
+        stdout = self.async_command('cat /etc/issue').makefile('r')
+        first = stdout.readline()
+        stdout.close()
+        if first.find("Debian") is not -1:
+            properties = debian_properties
+        elif first.find("Redhat") is not -1:
+            properties = redhat_properties
+        elif first.find("CentOS") is not -1:
+            properties = redhat_properties
+        else:
+            raise UnknownOSException(first)
+        properties['hostname'] = self.hostname
+
+        return properties
 
 class Hostlist(object):
     def __init__(self,filename='hosts.list', properties={}):
