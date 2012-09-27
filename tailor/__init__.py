@@ -3,7 +3,6 @@
 from os import walk, path, remove
 from paramiko import SSHClient
 from logging import getLogger, WARNING, INFO, DEBUG
-from copy import copy
 from stat import S_ISDIR, S_ISREG, S_ISLNK
 from errno import ENOENT
 
@@ -63,23 +62,21 @@ class Host(object):
     
     def get_properties(self):
         debian_properties = {
-           'preinstall_command': 'apt-get -y update',
-           'install_command': 'apt-get -y install',
-           'remove_command': 'apt-get -y remove',
-           'tinc_package': 'tinc'
+           'preinstall_command': 'apt-get -y --force-yes update',
+           'install_command': 'apt-get -y --force-yes install',
+           'remove_command': 'apt-get -y --force-yes remove'
         }
         redhat_properties = {
            'preinstall_command': 'yum -y install http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm',
            'install_command': 'yum -y install',
-           'remove_command': 'yum -y remove',
-           'tinc_package': 'tinc'
+           'remove_command': 'yum -y remove'
         }
         stdout = self.async_command('cat /etc/issue').makefile('r')
         first = stdout.readline()
         stdout.close()
         if first.find("Debian") is not -1:
             properties = debian_properties
-        elif first.find("Redhat") is not -1:
+        elif first.find("Redhat") is not -1 or first.find("Red Hat") is not -1:
             properties = redhat_properties
         elif first.find("CentOS") is not -1:
             properties = redhat_properties
@@ -284,67 +281,10 @@ class PutDir(ActionList):
                 self.actions.append(PutFile(fromfile, tofile))
                 self.logger.debug("Putfile %s %s", fromfile, tofile)
 
-#
-# Business Logic
-#
-
 class Tailor(object):
-    def __init__(self, netname):
-        self.hosts = Hostlist(properties={'netname': netname})
-    
-    def install(self, hostnames=None):
-        actions = [
-            Preinstall(),
-            Install('{tinc_package}'),
-            Try(Mkdir('/etc/tinc/'), DEBUG),
-            Mkdir('/etc/tinc/{netname}'),
-            Mkdir('/etc/tinc/{netname}/hosts'),
-            PutFile('nets.boot', '/etc/tinc/nets.boot', True),
-            PutFile('tinc.conf', '/etc/tinc/{netname}/tinc.conf', True),
-            PutFile('host.conf', '/etc/tinc/{netname}/hosts/{hostname}', True),
-            Command("tincd -n {netname} -K4096"),
-            GetFile('/etc/tinc/cf/hosts/{hostname}', 'hosts/{hostname}')
-        ]
-        if hostnames is None:
-            hosts = self.hosts
-        else:
-            hosts = self.hosts.subset(hostnames)
-        [hosts.run_action(action) for action in actions]
-        
-    def remove(self, hostnames=None):
-        actions = [
-            Uninstall('{tinc_package}'),
-            Try(Rmdir('/etc/tinc/{netname}')),
-            Try(Rm('/etc/tinc/nets.boot')),
-            Command("! pgrep -f '^tincd -n {netname}' || pkill -9 -f '^tincd -n {netname}'"),
-        ]
-        if hostnames is None:
-            hosts = self.hosts
-        else:
-            hosts = self.hosts.subset(hostnames)
-        for host in hosts:
-            try:
-                remove(host.interpolate('hosts/{hostname}'))
-            except OSError as e:
-                if e.errno is not ENOENT:
-                    raise
-        [hosts.run_action(action) for action in actions]
-        if hostnames is None:
-            self.hosts.hosts = []
-        else:
-            self.hosts.filter(hostnames)
-    
-    def refresh(self):
-        actions = [
-            PutFile('tinc.conf', '/etc/tinc/{netname}/tinc.conf', True),
-            PutDir('hosts/', '/etc/tinc/{netname}/hosts/'),
-            Command('pkill -SIGHUP -f "^tincd -n {netname}" || tincd -n {netname}'),
-            Try(Command('ip addr flush {netname} '), INFO),
-            Command('ip addr add {private_ipv4_cidr} dev {netname}'),
-            Command('ip link set {netname} up')
-        ]
-        [self.hosts.run_action(action) for action in actions]
-        
+    def __init__(self, properties={}):
+        self.hosts = Hostlist(properties=properties)
+                
     def test(self):
         actions = [Ping(target_host) for target_host in self.hosts]
         [self.hosts.run_action(action) for action in actions]

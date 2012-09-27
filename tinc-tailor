@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-from tailor import Tailor
+from tailor.tinc import Tinc
 from argparse import ArgumentParser, REMAINDER
 from logging import getLogger, DEBUG, StreamHandler, Formatter, INFO,\
     getLevelName, WARNING
+from copy import copy
 
 class ColoredConsoleHandler(StreamHandler):
     def emit(self, record):
@@ -50,7 +51,7 @@ if __name__ == '__main__':
     logger = getLogger('tailor')
     logger.setLevel(params.log_level)
     logger.debug("Starting tailor")
-    t = Tailor(netname=params.netname)
+    t = Tinc(netname=params.netname)
     if params.subcommand == 'install':
         t.install(params.hosts)
         t.refresh()
