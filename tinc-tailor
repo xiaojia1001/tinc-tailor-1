@@ -377,8 +377,8 @@ class ColoredConsoleHandler(StreamHandler):
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Install tinc on a set of servers.')
-    parser.add_argument('--netname', type=str, default='cf', help='Tinc netname')
-    parser.add_argument('--log-level', default=WARNING, help='Level log detail to log')
+    parser.add_argument('-n','--netname', type=str, default='cf', help='Tinc netname')
+    parser.add_argument('-l','--log-level', default=WARNING, help='Level log detail to log')
     parser.add_argument('--global-log-level', default=None, help='Level log all messages')
     subparsers = parser.add_subparsers(title='command', dest='subcommand')
     install_parser = subparsers.add_parser('install', help='install tinc on the given hosts.')
