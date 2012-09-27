@@ -4,12 +4,10 @@ Created on 26 Sep 2012
 @author: david
 '''
 from tailor import *
+from logging import DEBUG, INFO
+from errno import ENOENT
 
-class Tinc(Tailor):  
-
-    def __init__(self, netname):
-        super(Tinc,self).__init__(properties={'netname': netname, 'tinc_package': 'tinc'})
-    
+class Tinc(Tailor):
     def install(self, hostnames=None):
         actions = [
             Try(Preinstall()),
@@ -62,4 +60,24 @@ class Tinc(Tailor):
             Command('ip link set {netname} up')
         ]
         [self.hosts.run_action(action) for action in actions]
-        
+    
+    @staticmethod
+    def setup_argparse(parser):
+        subparsers = parser.add_subparsers(title='tinc-command', dest='tinc')
+        install_parser = subparsers.add_parser('install', help='install tinc on the given hosts.')
+        install_parser.add_argument('hosts', type=str, nargs='+')
+        remove_parser = subparsers.add_parser('remove', help='remove tinc from the given hosts.')
+        remove_parser.add_argument('hosts', type=str, nargs='+')
+        refresh_parser = subparsers.add_parser('refresh', help='reload tinc configuration on all hosts.')
+    
+    def argparse(self, params):
+        self.properties['netname']= params.netname
+        self.properties['tinc_package'] = 'tinc'
+        self.params = params
+    
+    def run(self):
+        if self.params.tinc == 'install':
+            self.install(self.params.hosts)
+        elif self.params.tinc == 'remove':
+            self.remove(self.params.hosts)
+        self.refresh()

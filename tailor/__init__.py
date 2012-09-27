@@ -2,9 +2,8 @@
 
 from os import walk, path, remove
 from paramiko import SSHClient
-from logging import getLogger, WARNING, INFO, DEBUG
+from logging import getLogger, WARNING
 from stat import S_ISDIR, S_ISREG, S_ISLNK
-from errno import ENOENT
 
 class TailorException(Exception):
     pass
@@ -36,7 +35,7 @@ class Host(object):
         self.hostname = hostname.replace('-','_')
         self.client = SSHClient()
         self.client.load_system_host_keys()
-        self.client.connect(hostname, username='root')
+        self.client.connect(hostname, username='root',key_filename=['/home/david/.ssh/id_rsa','/home/david/.ssh/id_rsa_ec2east','/home/david/.ssh/id_rsa_ec2west'])
         self.sftp = self.client.open_sftp()
         self.properties = self.get_properties()
         self.properties.update(properties)
@@ -282,15 +281,18 @@ class PutDir(ActionList):
                 self.logger.debug("Putfile %s %s", fromfile, tofile)
 
 class Tailor(object):
-    def __init__(self, properties={}):
-        self.hosts = Hostlist(properties=properties)
-                
-    def test(self):
-        actions = [Ping(target_host) for target_host in self.hosts]
-        [self.hosts.run_action(action) for action in actions]
-        
-    def run(self, command):
-        self.hosts.run_action(Command(command))
-        
-    def run_script(self, code):
+    def __init__(self, params=None, properties={}):
+        self.properties = properties
+        if params is not None:
+            self.argparse(params)
+        self.hosts = Hostlist(properties=self.properties)
+    
+    @staticmethod
+    def setup_argparse(parser):
+        pass
+    
+    def argparse(self, params):
+        pass
+    
+    def run(self):
         pass

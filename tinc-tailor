@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 from tailor.tinc import Tinc
-from argparse import ArgumentParser, REMAINDER
+from tailor.test import Test
+from tailor.run import Run
+from argparse import ArgumentParser
 from logging import getLogger, DEBUG, StreamHandler, Formatter, INFO,\
     getLevelName, WARNING
 from copy import copy
@@ -32,15 +34,10 @@ if __name__ == '__main__':
     parser.add_argument('-n','--netname', type=str, default='cf', help='Tinc netname')
     parser.add_argument('-l','--log-level', default=WARNING, help='Level log detail to log')
     parser.add_argument('--global-log-level', default=None, help='Level log all messages')
-    subparsers = parser.add_subparsers(title='command', dest='subcommand')
-    install_parser = subparsers.add_parser('install', help='install tinc on the given hosts.')
-    install_parser.add_argument('hosts', type=str, nargs='+')
-    remove_parser = subparsers.add_parser('remove', help='remove tinc from the given hosts.')
-    remove_parser.add_argument('hosts', type=str, nargs='+')
-    test_parser = subparsers.add_parser('test', help='test all hosts are able to ping each other.')
-    run_parser = subparsers.add_parser('run', help='run a command on all hosts.')
-    run_parser.add_argument('command', type=str, nargs=REMAINDER)
-    refresh_parser = subparsers.add_parser('refresh', help='reload tinc configuration on all hosts.')
+    subparsers = parser.add_subparsers(title='tool', dest='tool')
+    Tinc.setup_argparse(subparsers.add_parser('tinc', help='Configure tinc VPN.'))
+    Test.setup_argparse(subparsers.add_parser('test', help='Test all hosts are able to ping each other.'))
+    Run.setup_argparse(subparsers.add_parser('run', help='Run a command on all hosts.'))
     params = parser.parse_args()
     root = getLogger('')
     if params.global_log_level is not None:
@@ -51,22 +48,10 @@ if __name__ == '__main__':
     logger = getLogger('tailor')
     logger.setLevel(params.log_level)
     logger.debug("Starting tailor")
-    t = Tinc(netname=params.netname)
-    if params.subcommand == 'install':
-        t.install(params.hosts)
-        t.refresh()
-    elif params.subcommand == 'remove':
-        t.remove(params.hosts)
-        t.refresh()
-    elif params.subcommand == 'test':
-        t.test()
-    elif params.subcommand == 'run':
-        hosthandler = StreamHandler()
-        hosthandler.setFormatter(Formatter('%(name)s: %(message)s'))
-        hostlogger = getLogger('tailor.host')
-        root.removeHandler(handler)
-        hostlogger.addHandler(hosthandler)
-        hostlogger.setLevel(DEBUG)
-        t.run(" ".join(params.command))
-    elif params.subcommand == 'refresh':
-        t.refresh()
+    
+    if params.tool == 'test':
+        Test(params).run()
+    elif params.tool == 'run':
+        Run(params).run()
+    elif params.tool == 'tinc':
+        Tinc(params).run()

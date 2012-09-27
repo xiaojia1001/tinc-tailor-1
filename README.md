@@ -18,17 +18,17 @@ workstation can reach each other by these hostnames.
 command reference
 -----------------
 
-*  `tinc-tailor install *host1* *host2* ...`
+*  `tinc-tailor tinc install *host1* *host2* ...`
 
    This performs the initial setup of these hosts, adding them to the cluster.
    Note that they must already be added to the `hosts.list` file. 
 
-*  `tinc-tailor remove *host1* *host2* ...`
+*  `tinc-tailor tinc remove *host1* *host2* ...`
 
    This removes the given hosts from the cluster, and removes tinc from them.
    The hosts should be removed from `hosts.list` after this is run.
 
-*  `tinc-tailor refresh`
+*  `tinc-tailor tinc refresh`
 
    This reconfigures all hosts in `hosts.list` and ensures tincd is running on
    them.
@@ -60,7 +60,7 @@ Installing two nodes:
     $ cat > hosts.list
     node1.publicnetwork.com
     node2.publicnetwork.com
-    $ ./tinc-tailor install node1.publicnetwork.com node2.publicnetwork.com
+    $ ./tinc-tailor tinc install node1.publicnetwork.com node2.publicnetwork.com
 
 Verifying they work:
 
@@ -70,11 +70,11 @@ Adding an extra node:
 
     $ cat >> host.list
     ondemand.cloudprovider.com
-    $ ./tinc-tailor install ondemand.cloudprovider.com
+    $ ./tinc-tailor tinc install ondemand.cloudprovider.com
 
 Removing the first node:
 
-    $ ./tinc-tailor remove node2.publicnetwork.com
+    $ ./tinc-tailor tinc remove node2.publicnetwork.com
     $ cat > host.list
     node1.publicnetwork.com
     ondemand.cloudprovider.com
