@@ -191,44 +191,44 @@ class GetFile(Action):
         host.sftp.get(remotename, host.interpolate(self.localname))
 
 class Mkdir(Action):
-    def __init__(self, dir):
+    def __init__(self, remotedir):
         super(Mkdir, self).__init__()
-        self.dir = dir
+        self.dir = remotedir
         
     def run(self, host):
-        dir = host.interpolate(self.dir)
-        self.logger.info("Making directory '%s' on host '%s'", dir, host.hostname)
-        host.sftp.mkdir(dir)
+        remotedir = host.interpolate(self.dir)
+        self.logger.info("Making directory '%s' on host '%s'", remotedir, host.hostname)
+        host.sftp.mkdir(remotedir)
 
 class Rmdir(Action):
-    def __init__(self, dir):
+    def __init__(self, remotedir):
         super(Rmdir, self).__init__()
-        self.dir = dir
+        self.dir = remotedir
     
-    def recursive_remove(self,host, dir):
-        for attr in host.sftp.listdir_attr(dir):
+    def recursive_remove(self,host, remotedir):
+        for attr in host.sftp.listdir_attr(remotedir):
             if S_ISDIR(attr.st_mode):
                 self.recursive_remove(host, path.join(dir,attr.filename))
             elif S_ISREG(attr.st_mode) or S_ISLNK(attr.st_mode):
                 host.sftp.remove(path.join(dir,attr.filename))
             else:
                 raise IOError("Cannot remove remote file:" + str(attr))
-        host.sftp.rmdir(dir)
+        host.sftp.rmdir(remotedir)
     
     def run(self, host):
-        dir = host.interpolate(self.dir)
-        self.logger.info("Removing directory '%s' on host '%s'", dir, host.hostname)
-        self.recursive_remove(host, dir)
+        remotedir = host.interpolate(self.dir)
+        self.logger.info("Removing directory '%s' on host '%s'", remotedir, host.hostname)
+        self.recursive_remove(host, remotedir)
 
 class Rm(Action):
-    def __init__(self, file):
+    def __init__(self, filename):
         super(Rm, self).__init__()
-        self.file = file
+        self.file = filename
         
     def run(self, host):
-        file = host.interpolate(self.file)
-        self.logger.info("Removing file '%s' on host '%s'", file, host.hostname)
-        host.sftp.remove(file)
+        filename = host.interpolate(self.file)
+        self.logger.info("Removing file '%s' on host '%s'", filename, host.hostname)
+        host.sftp.remove(filename)
 
 class PutFile(Action):
     def __init__(self,localname, remotename, interpolate = False):
@@ -274,7 +274,7 @@ class PutDir(ActionList):
     def walk(self):
         super(PutDir, self).__init__()
         self.logger.debug("listing %s", self.localname)
-        for (dirpath, dirnames, filenames) in walk(self.localname):
+        for (dirpath, _, filenames) in walk(self.localname):
             remotedir = path.join(self.remotename, path.relpath(dirpath, self.localname))
             self.actions.append(Try(Mkdir(remotedir)))
             self.logger.debug("Mkdir %s", remotedir)
