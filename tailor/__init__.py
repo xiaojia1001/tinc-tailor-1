@@ -61,12 +61,14 @@ class Host(object):
     
     def get_properties(self):
         debian_properties = {
-           'preinstall_command': 'apt-get -y --force-yes update',
+           'addrepo_command': '',
+           'update_command': 'apt-get -y --force-yes update',
            'install_command': 'apt-get -y --force-yes install',
            'remove_command': 'apt-get -y --force-yes remove'
         }
         redhat_properties = {
-           'preinstall_command': 'yum -y install http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm',
+           'addrepo_command': 'yum -y install',
+           'update_command': 'yum clean expire-cache',
            'install_command': 'yum -y install',
            'remove_command': 'yum -y remove'
         }
@@ -75,10 +77,13 @@ class Host(object):
         stdout.close()
         if first.find("Debian") is not -1:
             properties = debian_properties
+            properties['distribution'] = 'debian'
         elif first.find("Redhat") is not -1 or first.find("Red Hat") is not -1:
             properties = redhat_properties
+            properties['distribution'] = 'redhat'
         elif first.find("CentOS") is not -1:
             properties = redhat_properties
+            properties['distribution'] = 'centos'
         else:
             raise UnknownOSException(first)
         properties['hostname'] = self.hostname
@@ -98,6 +103,7 @@ class Hostlist(object):
         net = 33
         hostnum = 1
         for host in self.hosts:
+            host.properties['number'] = str(hostnum)
             host.properties['connect_to_list'] = "\n".join('ConnectTo = ' + other_host for other_host in hostlist if other_host is not host.hostname)
             host.properties['private_ipv4_subnet'] = '192.168.'+str(net)+'.'+ str(hostnum)+'/32'
             host.properties['private_ipv4_address'] = '192.168.'+str(net)+'.'+ str(hostnum)
@@ -159,10 +165,39 @@ class Command(Action):
         self.logger.info("Running command '%s' on host '%s'", command, host.hostname)
         host.sync_command(command)
     
-class Preinstall(Command):
+class AddRepos(Action):
+    def __init__(self, repos):
+        self.repos = repos
+        super(Addrepo, self).__init__()
+
+    def debianrepo(self, host, repo):
+        repo = host.interpolate(repo) 
+        self.logger.info("Setting up repository '%s' on host '%s'", repo, host.hostname)
+        host.sync_command('echo "' + repo + '" >> /etc/apt/sources.list')
+
+    def redhatrepo(self, host, repo):
+        repo = host.interpolate(repos) 
+        self.logger.info("Setting up repository '%s' on host '%s'", repo, host.hostname)
+        host.sync_command('{addrepo_command} ' + repo)
+        
+    def run(self, host):
+        try:
+            if host.properties['distribution'] == 'debian':
+                repofn = self.debianrepo
+            if host.properties['distribution'] == 'centos' or host.properties['distribution'] == 'redhat':
+                repofn = self.redhatrepo   
+            if isinstance(self.repos[host.properties['distribution']], str):
+                self.repofn(host, self.repos[host.properties['distribution']])
+            else:
+                for repo in self.repos[host.properties['distribution']]:
+                    self.repofn(host, repo)
+        except KeyError:
+            pass
+
+class UpdateRepos(Command):
     def __init__(self):
-        super(Preinstall, self).__init__('{preinstall_command}')
-    
+        super(Install, self).__init__('{update_command}')
+
 class Install(Command):
     def __init__(self, package):
         super(Install, self).__init__('{install_command} '+package)

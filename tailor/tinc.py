@@ -10,7 +10,9 @@ from errno import ENOENT
 class Tinc(Tailor):
     def install(self, hostnames=None):
         actions = [
-            Try(Preinstall()),
+            Try(AddRepos({'redhat':'http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm',
+                          'centos':'http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm'})),
+            Try(UpdateRepos()),
             Try(Install('{tinc_package}')),
             Try(Mkdir('/etc/tinc/'), DEBUG),
             Mkdir('/etc/tinc/{netname}'),
