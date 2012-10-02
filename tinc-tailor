@@ -3,6 +3,7 @@
 from tailor.tinc import Tinc
 from tailor.test import Test
 from tailor.run import Run
+from tailor.cloudfabric import Cloudfabric
 from argparse import ArgumentParser, FileType
 from logging import getLogger, DEBUG, StreamHandler, Formatter, INFO,\
     getLevelName, WARNING
@@ -38,6 +39,7 @@ if __name__ == '__main__':
     parser.add_argument('--global-log-level', default=None, help='Level log all messages')
     subparsers = parser.add_subparsers(title='tool', dest='tool')
     Tinc.setup_argparse(subparsers.add_parser('tinc', help='Configure tinc VPN.'))
+    Cloudfabric.setup_argparse(subparsers.add_parser('cloudfabric', help='Configure cloudfabric database.'))
     Test.setup_argparse(subparsers.add_parser('test', help='Test all hosts are able to ping each other.'))
     Run.setup_argparse(subparsers.add_parser('run', help='Run a command on all hosts.'))
     params = parser.parse_args()
@@ -62,3 +64,5 @@ if __name__ == '__main__':
         Run(params).run()
     elif params.tool == 'tinc':
         Tinc(params).run()
+    elif params.tool == 'cloudfabric':
+        Cloudfabric(params).run()
