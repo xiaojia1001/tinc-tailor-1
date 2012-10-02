@@ -4,6 +4,7 @@ from tailor.tinc import Tinc
 from tailor.check import Check
 from tailor.run import Run
 from tailor.cloudfabric import Cloudfabric
+from tailor.test import TestRunner
 from argparse import ArgumentParser, FileType
 from logging import getLogger, DEBUG, StreamHandler, Formatter, INFO,\
     getLevelName, WARNING
@@ -42,6 +43,7 @@ if __name__ == '__main__':
     Cloudfabric.setup_argparse(subparsers.add_parser('cloudfabric', help='Configure cloudfabric database.'))
     Check.setup_argparse(subparsers.add_parser('check', help='Test all hosts are able to ping each other.'))
     Run.setup_argparse(subparsers.add_parser('run', help='Run a command on all hosts.'))
+    TestRunner.setup_argparse(subparsers.add_parser('test', help='Run tests.'))
     params = parser.parse_args()
     root = getLogger('')
     if params.global_log_level is not None:
@@ -66,3 +68,5 @@ if __name__ == '__main__':
         Tinc(params).run()
     elif params.tool == 'cloudfabric':
         Cloudfabric(params).run()
+    elif params.tool == 'test':
+        TestRunner(params).run()

@@ -47,8 +47,11 @@ class Host(object):
         chan.exec_command(command)
         return chan
     
-    def sync_command(self, command):
+    def sync_command(self, command, stdin=None):
         chan = self.async_command(command)
+        if stdin is not None:
+            chan.sendall(stdin)
+        chan.shutdown_write()
         for line in chan.makefile():
             self.logger.debug(line.strip())
         chan.recv_exit_status()
@@ -319,6 +322,7 @@ class PutDir(ActionList):
 
 class Tailor(object):
     def __init__(self, params=None, properties={}):
+        self.logger = getLogger('tailor.' + self.__class__.__name__)
         self.properties = properties
         if params is not None:
             self.argparse(params)
