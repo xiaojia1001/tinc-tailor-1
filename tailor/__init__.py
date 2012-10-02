@@ -119,7 +119,7 @@ class Hostlist(object):
         return [action.run(host) for host in self.hosts]
     
     def subset(self, filter_hosts):
-        newlist = Hostlist(None)
+        newlist = Hostlist()
         newlist.hosts = [host for host in self.hosts if host.hostname in filter_hosts]
         if len(newlist) is not len(filter_hosts):
             raise TailorException()
@@ -170,7 +170,7 @@ class Command(Action):
 class AddRepos(Action):
     def __init__(self, repos):
         self.repos = repos
-        super(Addrepo, self).__init__()
+        super(AddRepos, self).__init__()
 
     def debianrepo(self, host, repo):
         repo = host.interpolate(repo) 
@@ -178,7 +178,7 @@ class AddRepos(Action):
         host.sync_command('echo "' + repo + '" >> /etc/apt/sources.list')
 
     def redhatrepo(self, host, repo):
-        repo = host.interpolate(repos) 
+        repo = host.interpolate(repo) 
         self.logger.info("Setting up repository '%s' on host '%s'", repo, host.hostname)
         host.sync_command('{addrepo_command} ' + repo)
         

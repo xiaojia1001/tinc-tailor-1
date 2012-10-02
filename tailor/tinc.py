@@ -67,9 +67,9 @@ class Tinc(Tailor):
     def setup_argparse(parser):
         subparsers = parser.add_subparsers(title='tinc-command', dest='tinc')
         install_parser = subparsers.add_parser('install', help='install tinc on the given hosts.')
-        install_parser.add_argument('hosts', type=str, nargs='+')
+        install_parser.add_argument('install_hosts', type=str, nargs='+')
         remove_parser = subparsers.add_parser('remove', help='remove tinc from the given hosts.')
-        remove_parser.add_argument('hosts', type=str, nargs='+')
+        remove_parser.add_argument('remove_hosts', type=str, nargs='+')
         refresh_parser = subparsers.add_parser('refresh', help='reload tinc configuration on all hosts.')
     
     def argparse(self, params):
@@ -79,7 +79,7 @@ class Tinc(Tailor):
     
     def run(self):
         if self.params.tinc == 'install':
-            self.install(self.params.hosts)
+            self.install(self.params.install_hosts)
         elif self.params.tinc == 'remove':
-            self.remove(self.params.hosts)
+            self.remove(self.params.remove_hosts)
         self.refresh()
