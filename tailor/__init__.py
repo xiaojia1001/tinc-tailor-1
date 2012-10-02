@@ -91,27 +91,29 @@ class Host(object):
         return properties
 
 class Hostlist(object):
-    def __init__(self,filename='hosts.list', properties={}):
-        self.filename = filename
+    def __init__(self,hosts=[], properties={}):
+        self.properties = properties
+        self.hosts=[]
         self.logger = getLogger('tailor.hostlist')
-        if filename is None:
-            self.hosts=[]
-        else:
-            self.logger.debug("Loading hosts from '%s'", filename)
-            self.hosts = [Host(line.strip(), properties) for line in open(filename).readlines()]
-        hostlist = [host.hostname for host in self.hosts]
-        net = 33
-        hostnum = 1
+        self.net = 33
+        self.hostnum = 1
+        for host in hosts:
+            self.add_host(host)
+    
+    def add_host(self, hostname):
+        if self.hostnum >= 255:
+            raise TooManyHostsException()
+        host = Host(hostname, self.properties)
+        host.properties['number'] = str(self.hostnum)
+        host.properties['private_ipv4_subnet'] = '192.168.'+str(self.net)+'.'+ str(self.hostnum)+'/32'
+        host.properties['private_ipv4_address'] = '192.168.'+str(self.net)+'.'+ str(self.hostnum)
+        host.properties['private_ipv4_cidr'] = '192.168.'+str(self.net)+'.'+ str(self.hostnum)+'/24'
+        host.properties['private_ipv4_netmask'] = '255.255.255.0'
+        self.hosts.append(host)
+        self.hostnum += 1
+        
         for host in self.hosts:
-            host.properties['number'] = str(hostnum)
-            host.properties['connect_to_list'] = "\n".join('ConnectTo = ' + other_host for other_host in hostlist if other_host is not host.hostname)
-            host.properties['private_ipv4_subnet'] = '192.168.'+str(net)+'.'+ str(hostnum)+'/32'
-            host.properties['private_ipv4_address'] = '192.168.'+str(net)+'.'+ str(hostnum)
-            host.properties['private_ipv4_cidr'] = '192.168.'+str(net)+'.'+ str(hostnum)+'/24'
-            host.properties['private_ipv4_netmask'] = '255.255.255.0'
-            hostnum += 1
-            if hostnum >= 255:
-                raise TooManyHostsException()
+            host.properties['connect_to_list'] = "\n".join('ConnectTo = ' + other_host.hostname for other_host in self.hosts if other_host.hostname is not host.hostname)
     
     def run_action(self, action):
         return [action.run(host) for host in self.hosts]
@@ -320,7 +322,7 @@ class Tailor(object):
         self.properties = properties
         if params is not None:
             self.argparse(params)
-        self.hosts = Hostlist(properties=self.properties)
+        self.hosts = Hostlist(hosts=params.hosts, properties=self.properties)
     
     @staticmethod
     def setup_argparse(parser):

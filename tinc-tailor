@@ -3,7 +3,7 @@
 from tailor.tinc import Tinc
 from tailor.test import Test
 from tailor.run import Run
-from argparse import ArgumentParser
+from argparse import ArgumentParser, FileType
 from logging import getLogger, DEBUG, StreamHandler, Formatter, INFO,\
     getLevelName, WARNING
 from copy import copy
@@ -31,6 +31,8 @@ class ColoredConsoleHandler(StreamHandler):
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Install tinc on a set of servers.')
+    parser.add_argument('-H','--hosts', type=str, metavar='HOSTNAME', default=[], nargs='*', help='Host to connect to')
+    parser.add_argument('-f','--hosts-file', type=FileType('r'), default=None, help='List of hosts to connect to')
     parser.add_argument('-n','--netname', type=str, default='cf', help='Tinc netname')
     parser.add_argument('-l','--log-level', default=WARNING, help='Level log detail to log')
     parser.add_argument('--global-log-level', default=None, help='Level log all messages')
@@ -48,6 +50,11 @@ if __name__ == '__main__':
     logger = getLogger('tailor')
     logger.setLevel(params.log_level)
     logger.debug("Starting tailor")
+    
+    if params.hosts_file is None and len(params.hosts) is 0:
+        params.hosts_file = open('hosts.list')
+    if params.hosts_file is not None:
+        params.hosts.extend(line.strip() for line in params.hosts_file.readlines())
     
     if params.tool == 'test':
         Test(params).run()
