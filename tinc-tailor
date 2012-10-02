@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from tailor.tinc import Tinc
-from tailor.test import Test
+from tailor.check import Check
 from tailor.run import Run
 from tailor.cloudfabric import Cloudfabric
 from argparse import ArgumentParser, FileType
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     subparsers = parser.add_subparsers(title='tool', dest='tool')
     Tinc.setup_argparse(subparsers.add_parser('tinc', help='Configure tinc VPN.'))
     Cloudfabric.setup_argparse(subparsers.add_parser('cloudfabric', help='Configure cloudfabric database.'))
-    Test.setup_argparse(subparsers.add_parser('test', help='Test all hosts are able to ping each other.'))
+    Check.setup_argparse(subparsers.add_parser('check', help='Test all hosts are able to ping each other.'))
     Run.setup_argparse(subparsers.add_parser('run', help='Run a command on all hosts.'))
     params = parser.parse_args()
     root = getLogger('')
@@ -58,8 +58,8 @@ if __name__ == '__main__':
     if params.hosts_file is not None:
         params.hosts.extend(line.strip() for line in params.hosts_file.readlines())
     
-    if params.tool == 'test':
-        Test(params).run()
+    if params.tool == 'check':
+        Check(params).run()
     elif params.tool == 'run':
         Run(params).run()
     elif params.tool == 'tinc':
