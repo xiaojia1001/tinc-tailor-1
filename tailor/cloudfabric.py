@@ -16,6 +16,7 @@ class Cloudfabric(Tailor):
                                     'http://packages.geniedb.com/centos/unstable/geniedb-release-1-2.noarch.rpm'],
                           'centos':['http://mirror.bytemark.co.uk/fedora/epel/6/i386/epel-release-6-7.noarch.rpm',
                                     'http://packages.geniedb.com/centos/unstable/geniedb-release-1-2.noarch.rpm']})),
+            Try(UpdateRepos()),
             Try(Install('cloudfabric-mysql')),
             Try(Command("/etc/init.d/cloudfabric stop"), DEBUG),
             PutFile('cloudfabric.conf', '/etc/cloudfabric.conf', True),
