@@ -8,7 +8,7 @@ from logging import DEBUG
 from errno import ENOENT
 
 class Cloudfabric(Tailor):
-    def install(self, hostnames=None):
+    def install(self, hostnames=[]):
         actions = [
             Try(AddRepos({'debian':['deb http://packages.geniedb.com/debian unstable/',
                                     'deb http://backports.debian.org/debian-backports squeeze-backports main'],
@@ -22,33 +22,23 @@ class Cloudfabric(Tailor):
             PutFile('cloudfabric.conf', '/etc/cloudfabric.conf', True),
             Command("{service_command} cloudfabric start"),
         ]
-        if hostnames is None:
+        if len(hostnames) is 0:
             hosts = self.hosts
         else:
             hosts = self.hosts.subset(hostnames)
         [hosts.run_action(action) for action in actions]
         
-    def remove(self, hostnames=None):
+    def remove(self, hostnames=[]):
         actions = [
-            Command("/etc/init.d/cloudfabric stop"),
-            Uninstall('cloudfabric-mysql'),
+            Command("{service_command} stop"),
+            Uninstall('{cloudfabric_packages}'),
             Try(Rm('/etc/cloudfabric.conf')),
         ]
-        if hostnames is None:
+        if len(hostnames) is 0:
             hosts = self.hosts
         else:
             hosts = self.hosts.subset(hostnames)
-        for host in hosts:
-            try:
-                remove(host.interpolate('hosts/{hostname}'))
-            except OSError as e:
-                if e.errno is not ENOENT:
-                    raise
         [hosts.run_action(action) for action in actions]
-        if hostnames is None:
-            self.hosts.hosts = []
-        else:
-            self.hosts.filter(hostnames)
     
     def refresh(self):
         actions = [
@@ -60,9 +50,9 @@ class Cloudfabric(Tailor):
     def setup_argparse(parser):
         subparsers = parser.add_subparsers(title='cloudfabric-command', dest='cloudfabric')
         install_parser = subparsers.add_parser('install', help='install cloudfabric on the given hosts.')
-        install_parser.add_argument('install_hosts', type=str, nargs='+')
+        install_parser.add_argument('install_hosts', type=str, nargs='*')
         remove_parser = subparsers.add_parser('remove', help='remove cloudfabric from the given hosts.')
-        remove_parser.add_argument('remove_hosts', type=str, nargs='+')
+        remove_parser.add_argument('remove_hosts', type=str, nargs='*')
         refresh_parser = subparsers.add_parser('refresh', help='reload cloudfabric configuration on all hosts.')
     
     def argparse(self, params):
