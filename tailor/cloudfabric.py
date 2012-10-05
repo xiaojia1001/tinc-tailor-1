@@ -3,9 +3,8 @@ Created on 26 Sep 2012
 
 @author: david
 '''
-from tailor import *
+from tailor import Tailor, AddRepos, UpdateRepos, Install, Try, Command, Uninstall, Rm, PutFile
 from logging import DEBUG
-from errno import ENOENT
 
 class Cloudfabric(Tailor):
     def install(self, hostnames=[]):
@@ -54,7 +53,7 @@ class Cloudfabric(Tailor):
         install_parser.add_argument('install_hosts', type=str, nargs='*')
         remove_parser = subparsers.add_parser('remove', help='remove cloudfabric from the given hosts.')
         remove_parser.add_argument('remove_hosts', type=str, nargs='*')
-        refresh_parser = subparsers.add_parser('refresh', help='reload cloudfabric configuration on all hosts.')
+        subparsers.add_parser('refresh', help='reload cloudfabric configuration on all hosts.')
     
     def argparse(self, params):
         self.properties['netname']= params.netname
