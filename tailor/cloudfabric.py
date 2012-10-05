@@ -67,9 +67,9 @@ class Cloudfabric(Tailor):
     
     def argparse(self, params):
         self.properties['netname']= params.netname
-        self.distro_properties['debian']['cloudfabric_packages'] = 'cloudfabric exampleclient cloudfabric-mysql mysql-server-5.1'
-        self.distro_properties['redhat']['cloudfabric_packages'] = 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'
-        self.distro_properties['centos']['cloudfabric_packages'] = 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'
+        self.distro_properties['debian'] = {'cloudfabric_packages': 'cloudfabric exampleclient cloudfabric-mysql mysql-server-5.1'}
+        self.distro_properties['redhat'] = {'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'}
+        self.distro_properties['centos'] = {'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'}
         self.params = params
     
     def run(self):
