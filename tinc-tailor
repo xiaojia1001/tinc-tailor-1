@@ -36,6 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('-H','--hosts', type=str, metavar='HOSTNAME', default=[], nargs='*', help='Host to connect to')
     parser.add_argument('-f','--hosts-file', type=FileType('r'), default=None, help='List of hosts to connect to')
     parser.add_argument('-n','--netname', type=str, default='cf', help='Tinc netname')
+    parser.add_argument('-k','--key', type=str, default=[], nargs='*', help='SSH private key to try.')
     parser.add_argument('-l','--log-level', default=WARNING, help='Level log detail to log')
     parser.add_argument('--global-log-level', default=None, help='Level log all messages')
     subparsers = parser.add_subparsers(title='tool', dest='tool')

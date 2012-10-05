@@ -35,7 +35,7 @@ class Host(object):
         self.hostname = hostname.replace('-','_')
         self.client = SSHClient()
         self.client.load_system_host_keys()
-        self.client.connect(hostname, username='root',key_filename=['/home/david/.ssh/id_rsa','/home/david/.ssh/id_rsa_ec2east','/home/david/.ssh/id_rsa_ec2west'])
+        self.client.connect(hostname, username='root', key_filename=properties['key'])
         self.sftp = self.client.open_sftp()
         self.properties = self.get_properties()
         self.properties.update(properties)
@@ -328,6 +328,8 @@ class Tailor(object):
         self.properties = properties
         if params is not None:
             self.argparse(params)
+        if not properties.has_key('key'):
+            properties['key']=params.key
         self.hosts = Hostlist(hosts=params.hosts, properties=self.properties)
     
     @staticmethod
