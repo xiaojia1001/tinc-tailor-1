@@ -216,7 +216,7 @@ class AddRepos(Action):
 
 class UpdateRepos(Command):
     def __init__(self):
-        super(Install, self).__init__('{update_command}')
+        super(UpdateRepos, self).__init__('{update_command}')
 
 class Install(Command):
     def __init__(self, package):
