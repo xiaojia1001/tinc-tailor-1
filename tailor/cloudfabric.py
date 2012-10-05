@@ -17,10 +17,10 @@ class Cloudfabric(Tailor):
                           'centos':['http://mirror.bytemark.co.uk/fedora/epel/6/i386/epel-release-6-7.noarch.rpm',
                                     'http://packages.geniedb.com/centos/unstable/geniedb-release-1-2.noarch.rpm']})),
             Try(UpdateRepos()),
-            Try(Install('cloudfabric-mysql')),
-            Try(Command("/etc/init.d/cloudfabric stop"), DEBUG),
+            Try(Install('{cloudfabric_packages}')),
+            Try(Command("{service_command} cloudfabric stop"), DEBUG),
             PutFile('cloudfabric.conf', '/etc/cloudfabric.conf', True),
-            Command("/etc/init.d/cloudfabric start"),
+            Command("{service_command} cloudfabric start"),
         ]
         if hostnames is None:
             hosts = self.hosts
@@ -67,6 +67,9 @@ class Cloudfabric(Tailor):
     
     def argparse(self, params):
         self.properties['netname']= params.netname
+        self.distro_properties['debian']['cloudfabric_packages'] = 'cloudfabric exampleclient cloudfabric-mysql mysql-server-5.1'
+        self.distro_properties['redhat']['cloudfabric_packages'] = 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'
+        self.distro_properties['centos']['cloudfabric_packages'] = 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'
         self.params = params
     
     def run(self):

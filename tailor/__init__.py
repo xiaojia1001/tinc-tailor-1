@@ -29,7 +29,7 @@ class CommandFailedException(TailorException):
 #
 
 class Host(object):
-    def __init__(self, hostname, properties={}):
+    def __init__(self, hostname, properties={}, distro_properties={}):
         self.logger = getLogger('tailor.host.' + hostname)
         self.logger.info("Adding host '%s'", hostname)
         self.hostname = hostname.replace('-','_')
@@ -37,7 +37,7 @@ class Host(object):
         self.client.load_system_host_keys()
         self.client.connect(hostname, username='root', key_filename=properties['key'])
         self.sftp = self.client.open_sftp()
-        self.properties = self.get_properties()
+        self.properties = self.get_properties(distro_properties)
         self.properties.update(properties)
         
     def async_command(self, command):
@@ -62,40 +62,53 @@ class Host(object):
     def interpolate(self, string):
         return string.format(**self.properties)
     
-    def get_properties(self):
-        debian_properties = {
-           'addrepo_command': '',
-           'update_command': 'apt-get -y --force-yes update',
-           'install_command': 'apt-get -y --force-yes install',
-           'remove_command': 'apt-get -y --force-yes remove'
-        }
-        redhat_properties = {
-           'addrepo_command': 'yum -y install',
-           'update_command': 'yum clean expire-cache',
-           'install_command': 'yum -y install',
-           'remove_command': 'yum -y remove'
+    def get_properties(self, distro_properties):
+        local_dp = {
+            'debian': {
+               'addrepo_command': '',
+               'update_command': 'apt-get -y --force-yes update',
+               'install_command': 'apt-get -y --force-yes install',
+               'remove_command': 'apt-get -y --force-yes remove',
+               'service_command': 'invoke-rc.d'
+            },
+            'redhat': {
+               'addrepo_command': 'yum -y install',
+               'update_command': 'yum clean expire-cache',
+               'install_command': 'yum -y install',
+               'remove_command': 'yum -y remove',
+               'service_command': 'service'
+            },
+            'centos': {
+               'addrepo_command': 'yum -y install',
+               'update_command': 'yum clean expire-cache',
+               'install_command': 'yum -y install',
+               'remove_command': 'yum -y remove',
+               'service_command': 'service'
+            }
         }
         stdout = self.async_command('cat /etc/issue').makefile('r')
         first = stdout.readline()
         stdout.close()
         if first.find("Debian") is not -1:
-            properties = debian_properties
-            properties['distribution'] = 'debian'
+            distro = 'debian'
         elif first.find("Redhat") is not -1 or first.find("Red Hat") is not -1:
-            properties = redhat_properties
-            properties['distribution'] = 'redhat'
+            distro = 'redhat'
         elif first.find("CentOS") is not -1:
-            properties = redhat_properties
-            properties['distribution'] = 'centos'
+            distro = 'centos'
         else:
             raise UnknownOSException(first)
+        
+        properties = distro_properties[distro]
+        properties.update(local_dp[distro])
+        properties['distribution'] = distro
         properties['hostname'] = self.hostname
 
         return properties
 
 class Hostlist(object):
-    def __init__(self,hosts=[], properties={}):
+    def __init__(self,hosts=[], properties={}, distro_properties={}):
         self.properties = properties
+        self.distro_properties = distro_properties
         self.hosts=[]
         self.logger = getLogger('tailor.hostlist')
         self.net = 33
@@ -106,7 +119,7 @@ class Hostlist(object):
     def add_host(self, hostname):
         if self.hostnum >= 255:
             raise TooManyHostsException()
-        host = Host(hostname, self.properties)
+        host = Host(hostname, self.properties, self.distro_properties)
         host.properties['number'] = str(self.hostnum)
         host.properties['private_ipv4_subnet'] = '192.168.'+str(self.net)+'.'+ str(self.hostnum)+'/32'
         host.properties['private_ipv4_address'] = '192.168.'+str(self.net)+'.'+ str(self.hostnum)
@@ -326,11 +339,12 @@ class Tailor(object):
     def __init__(self, params=None, properties={}):
         self.logger = getLogger('tailor.' + self.__class__.__name__)
         self.properties = properties
+        self.distro_properties = {}
         if params is not None:
             self.argparse(params)
         if not properties.has_key('key'):
             properties['key']=params.key
-        self.hosts = Hostlist(hosts=params.hosts, properties=self.properties)
+        self.hosts = Hostlist(hosts=params.hosts, properties=self.properties, distro_properties=self.distro_properties)
     
     @staticmethod
     def setup_argparse(parser):
