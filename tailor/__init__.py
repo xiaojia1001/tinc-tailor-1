@@ -181,9 +181,8 @@ class AddRepos(Action):
         host.sync_command('echo "' + repo + '" >> /etc/apt/sources.list')
 
     def redhatrepo(self, host, repo):
-        repo = host.interpolate(repo) 
         self.logger.info("Setting up repository '%s' on host '%s'", repo, host.hostname)
-        host.sync_command('{addrepo_command} ' + repo)
+        host.sync_command(host.interpolate('{addrepo_command} ' + repo))
         
     def run(self, host):
         try:
@@ -192,10 +191,13 @@ class AddRepos(Action):
             if host.properties['distribution'] == 'centos' or host.properties['distribution'] == 'redhat':
                 repofn = self.redhatrepo   
             if isinstance(self.repos[host.properties['distribution']], str):
-                self.repofn(host, self.repos[host.properties['distribution']])
+                repofn(host, self.repos[host.properties['distribution']])
             else:
                 for repo in self.repos[host.properties['distribution']]:
-                    self.repofn(host, repo)
+                    try:
+                        repofn(host, repo)
+                    except CommandFailedException:
+                        pass
         except KeyError:
             pass
 
