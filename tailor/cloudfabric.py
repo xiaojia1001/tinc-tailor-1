@@ -39,6 +39,10 @@ class Cloudfabric(Tailor):
         else:
             hosts = self.hosts.subset(hostnames)
         [hosts.run_action(action) for action in actions]
+        if hostnames is None:
+            self.hosts.hosts = []
+        else:
+            self.hosts.filter(hostnames)
     
     def refresh(self):
         actions = [
