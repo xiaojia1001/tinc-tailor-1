@@ -98,7 +98,7 @@ class Host(object):
         else:
             raise UnknownOSException(first)
         
-        properties = []
+        properties = {}
         try:
             properties.update(distro_properties[distro])
         except:
