@@ -19,6 +19,7 @@ class Cloudfabric(Tailor):
             Try(Install('{cloudfabric_packages}')),
             Try(Command("{service_command} cloudfabric stop"), DEBUG),
             PutFile('cloudfabric.conf', '/etc/cloudfabric.conf', True),
+            Command("{service_command} {mysql_service} start"),
             Try(Command("{install_plugin}")),
             Command("{service_command} cloudfabric start"),
         ]
@@ -61,9 +62,9 @@ class Cloudfabric(Tailor):
     
     def argparse(self, params):
         self.properties['netname']= params.netname
-        self.distro_properties['debian'] = {'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric exampleclient cloudfabric-mysql mysql-server-5.1'}
-        self.distro_properties['redhat'] = {'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'}
-        self.distro_properties['centos'] = {'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'}
+        self.distro_properties['debian'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric exampleclient cloudfabric-mysql mysql-server-5.1'}
+        self.distro_properties['redhat'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'}
+        self.distro_properties['centos'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'}
         self.params = params
     
     def run(self):
