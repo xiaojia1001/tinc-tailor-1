@@ -98,8 +98,15 @@ class Host(object):
         else:
             raise UnknownOSException(first)
         
-        properties = distro_properties[distro]
-        properties.update(local_dp[distro])
+        properties = []
+        try:
+            properties.update(distro_properties[distro])
+        except:
+            pass
+        try:
+            properties.update(local_dp[distro])
+        except:
+            pass
         properties['distribution'] = distro
         properties['hostname'] = self.hostname
 
