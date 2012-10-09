@@ -9,7 +9,7 @@
 
 Requirements
 ------------
-* [Python 2.7](http://www.python.org/)
+* [Python](http://www.python.org/)
 * [Paramiko](http://www.lag.net/paramiko/)
 
 installing
@@ -21,8 +21,9 @@ to install to the system or `python setup.py install --user` to install into
 the user's home directory.
 
 If you use pip just run
-`pip install git+https://github.com/geniedb/tinc-tailor.git` or
-`pip install --install-option=--user git+https://github.com/geniedb/tinc-tailor.git`.
+`pip install -r https://github.com/geniedb/tinc-tailor/raw/master/requirements.txt git+https://github.com/geniedb/tinc-tailor.git`
+or
+`pip install --install-option=--user -r https://github.com/geniedb/tinc-tailor/raw/master/requirements.txt git+https://github.com/geniedb/tinc-tailor.git`.
 
 `hosts.list`
 ------------
