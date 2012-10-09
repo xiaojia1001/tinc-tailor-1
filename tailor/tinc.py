@@ -18,9 +18,9 @@ class Tinc(Tailor):
             Try(Mkdir('/etc/tinc/'), DEBUG),
             Mkdir('/etc/tinc/{netname}'),
             Mkdir('/etc/tinc/{netname}/hosts'),
-            PutFile('nets.boot', '/etc/tinc/nets.boot', True),
-            PutFile('tinc.conf', '/etc/tinc/{netname}/tinc.conf', True),
-            PutFile('host.conf', '/etc/tinc/{netname}/hosts/{hostname}', True),
+            PutFile(self.get_file('nets.boot'), '/etc/tinc/nets.boot', True),
+            PutFile(self.get_file('tinc.conf'), '/etc/tinc/{netname}/tinc.conf', True),
+            PutFile(self.get_file('host.conf'), '/etc/tinc/{netname}/hosts/{hostname}', True),
             Command("tincd -n {netname} -K4096"),
             GetFile('/etc/tinc/cf/hosts/{hostname}', 'hosts/{hostname}')
         ]
@@ -55,7 +55,7 @@ class Tinc(Tailor):
     
     def refresh(self):
         actions = [
-            PutFile('tinc.conf', '/etc/tinc/{netname}/tinc.conf', True),
+            PutFile(self.get_file('tinc.conf'), '/etc/tinc/{netname}/tinc.conf', True),
             PutDir('hosts/', '/etc/tinc/{netname}/hosts/'),
             Command('pkill -SIGHUP -f "^tincd -n {netname}" || tincd -n {netname}'),
             Try(Command('ip addr flush {netname} '), INFO),

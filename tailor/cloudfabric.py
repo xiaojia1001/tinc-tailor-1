@@ -18,7 +18,7 @@ class Cloudfabric(Tailor):
             Try(UpdateRepos()),
             Try(Install('{cloudfabric_packages}')),
             Try(Command("{service_command} cloudfabric stop"), DEBUG),
-            PutFile('cloudfabric.conf', '/etc/cloudfabric.conf', True),
+            PutFile(self.get_file('cloudfabric.conf'), '/etc/cloudfabric.conf', True),
             Command("{service_command} {mysql_service} start"),
             Try(Command("{install_plugin}")),
             Command("{service_command} cloudfabric start"),

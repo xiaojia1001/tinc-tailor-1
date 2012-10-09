@@ -348,12 +348,13 @@ class PutDir(ActionList):
 class Tailor(object):
     def __init__(self, params=None, properties={}):
         self.logger = getLogger('tailor.' + self.__class__.__name__)
+        self.root = path.abspath(path.dirname(__file__))
         self.properties = properties
         self.distro_properties = {}
         if params is not None:
             self.argparse(params)
-        if not properties.has_key('key'):
-            properties['key']=params.key
+        if not self.properties.has_key('key'):
+            self.properties['key']=params.key
         self.hosts = Hostlist(hosts=params.hosts, properties=self.properties, distro_properties=self.distro_properties)
     
     @staticmethod
@@ -362,6 +363,9 @@ class Tailor(object):
     
     def argparse(self, params):
         pass
+    
+    def get_file(self, filename):
+        return path.join(self.root, filename)
     
     def run(self):
         pass
