@@ -2,8 +2,9 @@
 `tinc-tailor`
 =============
 
-`tinc-tailor` is a tool for managing a cluster of servers using
-[`tinc`](http://www.tinc-vpn.org/).
+`tinc-tailor` is a tool for managing a cluster of
+[`CloudFabric`](http://www.geniedb.com/) servers using
+[`tinc`](http://www.tinc-vpn.org/) as a VPN.
 
 
 `hosts.list`
@@ -14,16 +15,18 @@ in the cluster.  You should ensure the hostnames have no hyphens in them as
 `tinc` does not like this. You should also ensure all the hosts and your
 workstation can reach each other by these hostnames.
 
+You may use IP addresses instead of hostnames.
+
 
 command reference
 -----------------
 
-*  `tinc-tailor tinc install *host1* *host2* ...`
+*  `tinc-tailor tinc install [HOST]...`
 
    This performs the initial setup of these hosts, adding them to the cluster.
    Note that they must already be added to the `hosts.list` file. 
 
-*  `tinc-tailor tinc remove *host1* *host2* ...`
+*  `tinc-tailor tinc remove [HOST]...`
 
    This removes the given hosts from the cluster, and removes tinc from them.
    The hosts should be removed from `hosts.list` after this is run.
@@ -33,12 +36,24 @@ command reference
    This reconfigures all hosts in `hosts.list` and ensures tincd is running on
    them.
 
-*  `tinc-tailor test`
+*  `tinc-tailor cloudfabric install [HOST]...`
+
+   This installs cloudfabric on the given hosts.
+
+*  `tinc-tailor cloudfabric remove [HOST]...`
+
+   This removes cloudfabric from the given hosts.
+
+*  `tinc-tailor cloudfabric refresh`
+
+   This restarts cloudfabric on the given hosts.
+
+*  `tinc-tailor check`
 
    This makes every host in `hosts.list` ping every other host by their private
    address
 
-*  `tinc-tailor run *command*`
+*  `tinc-tailor run COMMAND`
 
     This runs *command* on every host in `hosts.list`.
    
@@ -48,9 +63,39 @@ options
 
 `tinc-tailor` has some options to customize it's behavior:
 
-* `--log-level (DEBUG|INFO|WARNING|ERROR|FATAL)`
+*  `--help`
+   Show a brief summary of the options and comamnds that `tinc-tailor` accepts.
 
-* `--netname NETNAME`
+*  `--host HOST`
+   `--hosts-file FILENAME`
+   These options control `tinc-tailor`'s awerness of hosts in the cluster. It
+   combines the hosts given with the `--host` option with those read from the
+   file specified with the `--hosts-file` option. The `--host` option may be
+   given multiple times.
+
+   Only if neither of these are set does `tinc-tailor` read from the default
+   file `hosts.list`.
+
+*  `--key KEYFILE`
+   This option, which can be specified multiple times, specifies an ssh private
+   key file to try to use to connect to the nodes.  In all cases
+   `~/.ssh/id_rsa` and `~/.ssh/id_dsa` are tried to.  Note that `~/.ssh/config`
+   is ignored.
+
+*  `--netname NETNAME`
+   For `tinc`, this specifies the name of the vpn network to create, and the
+   name of the interface to create. For `cloudfabric` this specifies the
+   interface for inter-node communication.
+
+*  `--log-level (DEBUG|INFO|WARNING|ERROR|FATAL)`
+
+   This option determines the amount of information to be logged. The default
+   is WARNING, which prints very little.
+
+*  `--global-log-level (DEBUG|INFO|WARNING|ERROR|FATAL)`
+
+   As `--log-level`, but also log higher detail from python libraries used, for
+   example for debugging the SSH connection.
 
 examples
 --------
@@ -64,7 +109,7 @@ Installing two nodes:
 
 Verifying they work:
 
-    $ ./tinc-tailor test
+    $ ./tinc-tailor check
 
 Adding an extra node:
 

@@ -10,7 +10,7 @@ from logging import DEBUG, getLogger
 class Run(Tailor):
     @staticmethod
     def setup_argparse(parser):
-        parser.add_argument('command', default=None, nargs=REMAINDER)
+        parser.add_argument('command', default=None, nargs=REMAINDER, help='''Command to be run on all hosts.''')
     
     def argparse(self, params):
         self.command = params.command
