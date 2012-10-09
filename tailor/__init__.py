@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from os import walk, path, remove
-from paramiko import SSHClient
+from paramiko import SSHClient, AutoAddPolicy
 from logging import getLogger, WARNING
 from stat import S_ISDIR, S_ISREG, S_ISLNK
 
@@ -34,6 +34,7 @@ class Host(object):
         self.logger.info("Adding host '%s'", hostname)
         self.hostname = hostname.replace('-','_')
         self.client = SSHClient()
+        self.client.set_missing_host_key_policy(AutoAddPolicy())
         self.client.load_system_host_keys()
         self.client.connect(hostname, username='root', key_filename=properties['key'])
         self.sftp = self.client.open_sftp()
