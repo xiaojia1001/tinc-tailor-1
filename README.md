@@ -7,6 +7,19 @@
 [`tinc`](http://www.tinc-vpn.org/) as a VPN.
 
 
+Requirements
+------------
+* [Python 2.7](http://www.python.org/)
+* [Paramiko](http://www.lag.net/paramiko/)
+
+installing
+----------
+
+`tinc-tailor` can be run from the source checked out from
+<https://github.com/geniedb/tinc-tailor/>.  Run `sudo pythonsetup.py install`
+to install to the system or `python setup.py install --user` to install into
+the user's home directory.
+
 `hosts.list`
 ------------
 

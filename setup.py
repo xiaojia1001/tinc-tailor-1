@@ -9,5 +9,6 @@ setup( name = 'TincTailor',
        author_email = 'tech@geniedb.com',
        packages = ['tailor'],
        package_data = {'tailor': ['cloudfabric.conf','tinc.conf','host.conf','nets.boot']},
-       scripts = ['tinc-tailor']
+       scripts = ['tinc-tailor'],
+       requires = ['paramiko', 'argparse']
        )
