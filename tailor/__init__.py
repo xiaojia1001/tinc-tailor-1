@@ -178,6 +178,8 @@ class Try(Action):
     def run(self, host):
         try:
             self.action.run(host)
+        except KeyboardInterrupt:
+            raise
         except:
             self.action.logger.log(self.log_level,'Try Action failed', exc_info=True)
     
