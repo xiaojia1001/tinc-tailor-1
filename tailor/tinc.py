@@ -48,7 +48,7 @@ class Tinc(Tailor):
                 if e.errno is not ENOENT:
                     raise
         [hosts.run_action(action) for action in actions]
-        if hostnames is None:
+        if len(hostnames) is 0:
             self.hosts.hosts = []
         else:
             self.hosts.filter(hostnames)
