@@ -269,9 +269,9 @@ class Rmdir(Action):
     def recursive_remove(self,host, remotedir):
         for attr in host.sftp.listdir_attr(remotedir):
             if S_ISDIR(attr.st_mode):
-                self.recursive_remove(host, path.join(dir,attr.filename))
+                self.recursive_remove(host, path.join(remotedir,attr.filename))
             elif S_ISREG(attr.st_mode) or S_ISLNK(attr.st_mode):
-                host.sftp.remove(path.join(dir,attr.filename))
+                host.sftp.remove(path.join(remotedir,attr.filename))
             else:
                 raise IOError("Cannot remove remote file:" + str(attr))
         host.sftp.rmdir(remotedir)
