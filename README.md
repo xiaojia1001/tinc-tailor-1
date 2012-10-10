@@ -16,7 +16,7 @@ installing
 ----------
 
 `tinc-tailor` can be run from the source checked out from
-<https://github.com/geniedb/tinc-tailor/>.  Run `sudo pythonsetup.py install`
+<https://github.com/geniedb/tinc-tailor/>.  Run `sudo python setup.py install`
 to install to the system or `python setup.py install --user` to install into
 the user's home directory.
 
