@@ -55,7 +55,7 @@ if __name__ == '__main__':
     logger = getLogger('tailor')
     logger.setLevel(params.log_level)
     logger.debug("Starting tailor")
-    print params
+
     if params.hosts_file is None and len(params.hosts) is 0:
         params.hosts_file = open('hosts.list')
     if params.hosts_file is not None:
