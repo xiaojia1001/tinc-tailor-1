@@ -33,7 +33,7 @@ class ColoredConsoleHandler(StreamHandler):
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='''tinc-tailor is a tool for managing a cluster of CloudFabric servers using tinc as a VPN.''')
-    parser.add_argument('-H','--host', dest='hosts', type=str, metavar='HOSTNAME', action='append', help='''This option, which can be specified multiple times, tells tinc-tailor which hosts are in the cluster. If this option or --host-file is set, the default hosts.list file is not read.''')    
+    parser.add_argument('-H','--host', dest='hosts', type=str, metavar='HOSTNAME', default=[], action='append', help='''This option, which can be specified multiple times, tells tinc-tailor which hosts are in the cluster. If this option or --host-file is set, the default hosts.list file is not read.''')    
     parser.add_argument('-f','--hosts-file', type=FileType('r'), help='''Each line in the given file is interpreted as a host, as if given to the --host option.''')
     parser.add_argument('-n','--netname', type=str, default='cf', help='''For tinc, this specifies the name of the vpn network to create, and the name of the interface to create. For cloudfabric this specifies the interface for inter-node communication.''')
     parser.add_argument('-k','--key', type=str, default=[], action='append', help='''This option, which can be specified multiple times, specifies an ssh private key file to try to use to connect to the nodes.  In all cases ~/.ssh/id_rsa and ~/.ssh/id_dsa are tried to.  Note that ~/.ssh/config is ignored.''')
