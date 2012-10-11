@@ -28,7 +28,18 @@ class Cloudfabric(Tailor):
         else:
             hosts = self.hosts.subset(hostnames)
         [hosts.run_action(action) for action in actions]
-        
+
+    def upgrade(self, hostnames=[]):
+        actions = [
+            Try(UpdateRepos()),
+            Try(Upgrade('{cloudfabric_packages}')),
+        ]
+        if len(hostnames) is 0:
+            hosts = self.hosts
+        else:
+            hosts = self.hosts.subset(hostnames)
+        [hosts.run_action(action) for action in actions]
+
     def remove(self, hostnames=[]):
         actions = [
             Command("{service_command} stop"),
@@ -56,6 +67,8 @@ class Cloudfabric(Tailor):
         subparsers = parser.add_subparsers(title='cloudfabric-command', dest='cloudfabric')
         install_parser = subparsers.add_parser('install', help='install cloudfabric on the given hosts.')
         install_parser.add_argument('install_hosts', type=str, nargs='*')
+        upgrade_parser = subparsers.add_parser('upgrade', help='get the lastest version of cloudfabric.')
+        upgrade_parser.add_argument('upgrade_hosts', type=str, nargs='*')
         remove_parser = subparsers.add_parser('remove', help='remove cloudfabric from the given hosts.')
         remove_parser.add_argument('remove_hosts', type=str, nargs='*')
         subparsers.add_parser('refresh', help='reload cloudfabric configuration on all hosts.')

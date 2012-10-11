@@ -69,6 +69,7 @@ class Host(object):
                'addrepo_command': '',
                'update_command': 'apt-get -y --force-yes update',
                'install_command': 'apt-get -y --force-yes install',
+               'upgrade_command': 'apt-get -y --force-yes upgrade',
                'remove_command': 'apt-get -y --force-yes remove',
                'service_command': 'invoke-rc.d'
             },
@@ -76,6 +77,7 @@ class Host(object):
                'addrepo_command': 'yum -y install',
                'update_command': 'yum clean expire-cache',
                'install_command': 'yum -y install',
+               'upgrade_command': 'yum -y upgrade',
                'remove_command': 'yum -y remove',
                'service_command': 'service'
             },
@@ -83,6 +85,7 @@ class Host(object):
                'addrepo_command': 'yum -y install',
                'update_command': 'yum clean expire-cache',
                'install_command': 'yum -y install',
+               'upgrade_command': 'yum -y upgrade',
                'remove_command': 'yum -y remove',
                'service_command': 'service'
             }
@@ -231,6 +234,10 @@ class UpdateRepos(Command):
 class Install(Command):
     def __init__(self, package):
         super(Install, self).__init__('{install_command} '+package)
+
+class Upgrade(Command):
+    def __init__(self, package):
+        super(Upgrade, self).__init__('{upgrade_command} '+package)
     
 class Ping(Command):
     def __init__(self, host):
