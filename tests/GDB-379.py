@@ -3,17 +3,14 @@ from tailor.test import Test
 class GDB379(Test):
     """Test we can load wordpress data on one node, then run a query on the other"""
     def setUp(self):
-        self.require(len(self.hosts.hosts) >= 2)
+        if len(self.hosts.hosts) < 2:
+            self.skipTest("Insufficient Hosts")
         self.master = self.hosts.hosts[0]
         self.slave = self.hosts.hosts[1]
     
-    def run(self):
-        self.logger.info("Loading data")
-        self.master.sync_command("mysql -f -pgeniedb2012 > /dev/null", stdin=querylog)
-        self.logger.info("Verifying slave")
-        self.slave.sync_command("mysql -pgeniedb2012 wp_test", stdin=testquery)
-
-test=[GDB379]
+    def runTest(self):
+        self.assertSqlSuccess(querylog, host=self.master, password='geniedb2012', force=True)
+        self.assertSqlSuccess(testquery, self.slave, 'wp_test', 'geniedb2012')
 
 testquery = """SELECT SQL_CALC_FOUND_ROWS wp_posts.ID FROM wp_posts WHERE 1=1 AND wp_posts.post_type = 'post' AND (wp_posts.post_status = 'publish') ORDER BY wp_posts.post_date DESC LIMIT 0, 10;
 """
