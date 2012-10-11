@@ -65,7 +65,7 @@ class TailorTestResult(TestResult):
         if len(self.failures) + len(self.errors) + len(self.unexpectedSuccesses) > 0:
             self.logger.error("[  FAILED  ]"+NORMAL+" %s test, listed below:", len(self.failures) + len(self.errors) + len(self.unexpectedSuccesses))
         for failure in chain(self.failures, self.errors, self.unexpectedSuccesses):
-            self.logger.error("[  FAILED  ]"+NORMAL+" %s", failure[0])
+            self.logger.error("[  FAILED  ]"+NORMAL+" %s", failure[0].id())
 
     def startTest(self, test):
         super(TailorTestResult, self).startTest(self)
@@ -80,24 +80,24 @@ class TailorTestResult(TestResult):
             self.startModuleTime = time()
 
         self.testsRunThisModule += 1
-        self.logger.info("[ RUN      ]"+NORMAL+" %s", test)
+        self.logger.info("[ RUN      ]"+NORMAL+" %s", test.id())
         self.startTestTime = time()
 
     @failfast
     def addError(self, test, err):
         super(TailorTestResult, self).addError(test,err)
         print_exception(err[0], err[1], err[2])
-        self.logger.error("[    ERROR ]"+NORMAL+" %s (%d ms)", test, (time()-self.startTestTime)*1000)
+        self.logger.error("[    ERROR ]"+NORMAL+" %s (%d ms)", test.id(), (time()-self.startTestTime)*1000)
 
     @failfast
     def addFailure(self, test, err):
         super(TailorTestResult, self).addFailure(test,err)
         print_exception(err[0], err[1], err[2])
-        self.logger.error("[   FAILED ]"+NORMAL+" %s (%d ms)", test, (time()-self.startTestTime)*1000)
+        self.logger.error("[   FAILED ]"+NORMAL+" %s (%d ms)", test.id(), (time()-self.startTestTime)*1000)
 
     def addSuccess(self, test):
         super(TailorTestResult, self).addSuccess(test)
-        self.logger.info("[       OK ]"+NORMAL+" %s (%d ms)", test, (time()-self.startTestTime)*1000)
+        self.logger.info("[       OK ]"+NORMAL+" %s (%d ms)", test.id(), (time()-self.startTestTime)*1000)
 
     def addSkip(self, test, reason):
         super(TailorTestResult, self).addSkip(test,reason)
@@ -105,13 +105,13 @@ class TailorTestResult(TestResult):
 
     def addExpectedFailure(self, test, err):
         super(TailorTestResult, self).addExpectedFailure(test,err)
-        self.logger.info("[       OK ]"+NORMAL+" %s (%d ms)", test, (time()-self.startTestTime)*1000)
+        self.logger.info("[       OK ]"+NORMAL+" %s (%d ms)", test.id(), (time()-self.startTestTime)*1000)
 
     @failfast
     def addUnexpectedSuccess(self, test):
         super(TailorTestResult, self).addUnexpectedSuccess(test)
         self.logger.error("Expected Failure")
-        self.logger.error("[   FAILED ]"+NORMAL+" %s (%d ms)", test, (time()-self.startTestTime)*1000)
+        self.logger.error("[   FAILED ]"+NORMAL+" %s (%d ms)", test.id(), (time()-self.startTestTime)*1000)
 
 class TestRunner(Tailor):
     def __init__(self, *args, **kwargs):
