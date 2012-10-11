@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
 
-from tailor.test import Test
+from tailor.test import GenieTest
 from os import path
 
-class Cloudbook100k(Test):
+class Cloudbook100k(GenieTest):
     """Test we can load replicate cloudbook fully"""
     def setUp(self):
+        super(Cloudbook100k, self).setUp()
         if len(self.hosts.hosts) < 2:
             self.skipTest("Insufficient Hosts")
         try:
@@ -17,7 +18,7 @@ class Cloudbook100k(Test):
         self.slave = self.hosts.hosts[1]
 
     def runTest(self):
-        self.assertSqlSuccess("DROP DATABASE geniedb_cl;", host=self.master, password='geniedb2012', force=True)
-        self.assertSqlSuccess("CREATE DATABASE geniedb_cl;", host=self.master, password='geniedb2012')
-        self.assertSqlSuccess(self.sqlLoad, host=self.slave, password='geniedb2012')
+        self.assertSqlSuccess("DROP DATABASE geniedb_cl;", hosts=self.master, password='geniedb2012', force=True)
+        self.assertSqlSuccess("CREATE DATABASE geniedb_cl;", hosts=self.master, password='geniedb2012')
+        self.assertSqlSuccess(self.sqlLoad, hosts=self.slave, password='geniedb2012')
         self.assertScriptSame('for i in `mysql -Ns -pgeniedb2012 -e "show tables in geniedb_cl;"`; do   echo $i `mysql -Ns -pgeniedb2012 -e "select count(*) from geniedb_cl.$i;"`; done')

@@ -11,7 +11,7 @@ from traceback import print_exception
 from logging import getLogger, INFO
 from unittest import TestCase, defaultTestLoader, TestResult
 from unittest.result import failfast
-from tailor import Tailor
+from tailor import Tailor, Host
 
 NORMAL='\x1b[0m'
 
@@ -106,6 +106,8 @@ class TestRunner(Tailor):
                 stopTestRun()
     
     def run(self):
+        if not self.logger.isEnabledFor(INFO):
+            self.logger.setLevel(INFO)
         Test.hosts = self.hosts
         if self.params.tests is None:
             tests = defaultTestLoader.discover('tests', '*')
@@ -121,7 +123,6 @@ class TestRunner(Tailor):
     def argparse(self, params):
         self.properties['netname']= params.netname
         self.params = params
-        getLogger('tailor.test.runner').setLevel(INFO)
 
 class UnsatisfiedRequirement(Exception):
     pass
@@ -154,10 +155,17 @@ class Test(TestCase):
         chan.shutdown_write()
         result = "".join(chan.makefile())
         chan.recv_exit_status()
-        self.assertEqual(0, chan.exit_status, "Query failed")
-        return result
+        return (result, chan.exit_status)
 
-    assertSqlSuccess = runSql
+    def assertSqlSuccess(self, query, hosts=None, *args, **kwargs):
+        if hosts is None:
+            hosts = self.hosts
+        if isinstance(hosts, Host):
+            hosts = [hosts]
+        for host in hosts:
+            result, status = self.runSql(query, host, *args, **kwargs)
+            self.assertEqual(0, status, "Query failed")
+        return result
 
     def runScript(self, script, host=None):
         if host is None:
@@ -169,23 +177,28 @@ class Test(TestCase):
         chan.recv_exit_status()
         return (result, chan.exit_status)
 
-    def assertScriptSuccess(self, *args, **kwargs):
-        result, status = self.runScript(*args, **kwargs)
-        self.assertEqual(0, status, "Script failed")
+    def assertScriptSuccess(self, script, hosts=None, *args, **kwargs):
+        if hosts is None:
+            hosts = self.hosts
+        if isinstance(hosts, Host):
+            hosts = [hosts]
+        for host in hosts:
+            result, status = self.runScript(script, host, *args, **kwargs)
+            self.assertEqual(0, status, "Script failed")
         return result
 
     def assertSqlEqual(self, query, desiredResult, hosts=None, msg=None):
         if hosts is None:
             hosts = self.hosts
         for host in hosts:
-            self.assertEqual(desiredResult, self.runSql(query, host), msg)
+            self.assertEqual(desiredResult, self.assertSqlSuccess(query, host), msg)
 
     def assertSqlSame(self, query, hosts=None, msg=None):
         result = None
         if hosts is None:
             hosts = self.hosts
         for host in hosts:
-            thisResult = self.runSql(query, host)
+            thisResult = self.assertSqlSuccess(query, host)
             if result is None:
                 result = thisResult
             else:
@@ -207,3 +220,23 @@ class Test(TestCase):
                 result = thisResult
             else:
                 self.assertEqual(result, thisResult, msg)
+
+class GenieTest(Test):
+    def setUp(self):
+        super(GenieTest,self).setUp()
+        self.assertScriptSuccess("""
+        /etc/init.d/mysql* stop
+        /etc/init.d/cloudfabric stop
+        rm -rf /var/log/{cloudfabric-core,DatabaseAdapter}.{log,trace} /var/lib/cloudfabric/* /dev/shm/CloudFabric /var/run/cloudfabric.stats
+        truncate --size=0 /var/log/geniedb_se.log
+        """)
+        self.assertScriptSuccess("""
+        /etc/init.d/cloudfabric start
+        /etc/init.d/mysql* start
+        """)
+
+    def tearDown(self):
+        super(GenieTest,self).tearDown()
+        self.assertScriptSuccess("""
+        java -cp /usr/share/java/DatabaseAdapter.jar com.sleepycat.je.util.DbDump -h /var/lib/cloudfabric -l | grep '[^$].\$$' | cut -d . -f 1 | xargs -I{} echo rm -rf /var/lib/mysql/{}
+        """)
