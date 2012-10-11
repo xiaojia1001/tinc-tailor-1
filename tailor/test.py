@@ -12,10 +12,35 @@ from logging import getLogger, INFO
 from unittest import TestCase, defaultTestLoader, TestResult
 from unittest.result import failfast
 from tailor import Tailor, Host
+from argparse import FileType
 
 NORMAL='\x1b[0m'
 
 path.append('tests')
+
+class MultiTestResult(TestResult):
+    def __init__(self, results, *args, **kwargs):
+        super(MultiTestResult, self).__init__(*args, **kwargs)
+        self.results=results
+        self.dispatch("startTestRun")
+        self.dispatch("startTest")
+        self.dispatch("stopTestRun")
+        self.dispatch("stopTest")
+        self.dispatch("endTestRun")
+        self.dispatch("endTest")
+        self.dispatch("addError")
+        self.dispatch("addFailure")
+        self.dispatch("addSuccess")
+        self.dispatch("addSkip")
+        self.dispatch("addExpectedFailure")
+        self.dispatch("addUnexpectedSuccess")
+
+    def dispatch(self, name):
+        def fn(*args, **kwargs):
+            for res in self.results:
+                result = getattr(res, name)(*args, **kwargs)
+            return result
+        setattr(self,name,fn)
 
 class TailorTestResult(TestResult):
     def __init__(self, logger, *args, **kwargs):
@@ -95,6 +120,9 @@ class TestRunner(Tailor):
         
     def run_test(self, test):
         result = TailorTestResult(self.logger)
+        if self.params.xml is not None:
+            from junitxml import JUnitXmlResult
+            result = MultiTestResult([result,JUnitXmlResult(self.params.xml)])
         startTestRun = getattr(result, 'startTestRun', None)
         if startTestRun is not None:
             startTestRun()
@@ -118,6 +146,7 @@ class TestRunner(Tailor):
         
     @staticmethod
     def setup_argparse(parser):
+        parser.add_argument('--xml', type=FileType(mode='w'))
         parser.add_argument('tests', type=str, nargs='*')
     
     def argparse(self, params):
