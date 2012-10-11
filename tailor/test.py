@@ -159,8 +159,51 @@ class Test(TestCase):
 
     assertSqlSuccess = runSql
 
+    def runScript(self, script, host=None):
+        if host is None:
+            host = self.hosts.hosts[0]
+        chan = host.async_command('sh')
+        chan.sendall(script)
+        chan.shutdown_write()
+        result = "".join(chan.makefile())
+        chan.recv_exit_status()
+        return (result, chan.exit_status)
+
+    def assertScriptSuccess(self, *args, **kwargs):
+        result, status = self.runScript(*args, **kwargs)
+        self.assertEqual(0, status, "Script failed")
+        return result
+
     def assertSqlEqual(self, query, desiredResult, hosts=None, msg=None):
         if hosts is None:
             hosts = self.hosts
         for host in hosts:
             self.assertEqual(desiredResult, self.runSql(query, host), msg)
+
+    def assertSqlSame(self, query, hosts=None, msg=None):
+        result = None
+        if hosts is None:
+            hosts = self.hosts
+        for host in hosts:
+            thisResult = self.runSql(query, host)
+            if result is None:
+                result = thisResult
+            else:
+                self.assertEqual(result, thisResult, msg)
+
+    def assertScriptEqual(self, script, desiredResult, hosts=None, msg=None):
+        if hosts is None:
+            hosts = self.hosts
+        for host in hosts:
+            self.assertEqual(desiredResult, self.assertScriptSuccess(script, host), msg)
+
+    def assertScriptSame(self, script, hosts=None, msg=None):
+        result = None
+        if hosts is None:
+            hosts = self.hosts
+        for host in hosts:
+            thisResult = self.assertScriptSuccess(script, host)
+            if result is None:
+                result = thisResult
+            else:
+                self.assertEqual(result, thisResult, msg)

@@ -29,6 +29,10 @@ class Fixture(Test):
 class ExamplePass(Fixture):
     def runTest(self):
         self.assertEqual(self.master.sync_command('hostname'), 0)
+
+class ExampleDiff(Fixture):
+    def runTest(self):
+        self.assertScriptSame('hostname')
         
 class ExampleSlow(Fixture):
     def runTest(self):
