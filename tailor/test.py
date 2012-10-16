@@ -4,6 +4,7 @@ Created on 2 Oct 2012
 @author: david
 '''
 
+from sys import path
 from time import time
 from itertools import chain
 from traceback import print_exception
@@ -12,6 +13,8 @@ from unittest import TestCase, defaultTestLoader, TestResult
 from unittest.result import failfast
 from tailor import Tailor, Host
 from argparse import FileType
+
+path.append('tests')
 
 NORMAL='\x1b[0m'
 

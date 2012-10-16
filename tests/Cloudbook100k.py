@@ -7,13 +7,13 @@ from os import path
 class Cloudbook100k(GenieTest):
     """Test we can load replicate cloudbook fully"""
     def setUp(self):
-        super(Cloudbook100k, self).setUp()
         if len(self.hosts.hosts) < 2:
             self.skipTest("Insufficient Hosts")
         try:
             self.sqlLoad = "".join(open(path.join(path.abspath(path.dirname(__file__)), 'gdb_JustCloudboo_cl.sql')).readlines())
         except:
             self.skipTest("Could not find sql data")
+        super(Cloudbook100k, self).setUp()
         self.master = self.hosts.hosts[0]
         self.slave = self.hosts.hosts[1]
 
