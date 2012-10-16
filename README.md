@@ -54,9 +54,11 @@ command reference
    This reconfigures all hosts in `hosts.list` and ensures tincd is running on
    them.
 
-*  `tinc-tailor cloudfabric install [HOST]...`
+*  `tinc-tailor cloudfabric [--channel {stable|unstable}] install [HOST]...`
 
-   This installs cloudfabric on the given hosts.
+   This installs cloudfabric on the given hosts.  The `--channel` option, which
+   defaults to `unstable` controls which distribution channel of cloudfabric is
+   installed.
 
 *  `tinc-tailor cloudfabric remove [HOST]...`
 

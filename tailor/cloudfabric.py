@@ -3,18 +3,28 @@ Created on 26 Sep 2012
 
 @author: david
 '''
-from tailor import Tailor, AddRepos, UpdateRepos, Install, Try, Command, Uninstall, Rm, PutFile
+from tailor import Tailor, Action, AddRepos, UpdateRepos, Install, Try, Command, Uninstall, Rm, PutFile
 from logging import DEBUG
+
+class RHChannel(Action):
+    def run(self, host):
+        if host.properties['distribution'] not in ('redhat, centos'):
+            return
+        if host.properties['channel'] == 'unstable':
+            host.sync_command("sed -e '/unstable/,$ s/enabled=0/enabled=1/' -i /etc/yum.repos.d/GenieDB.repo")
+        else:
+            host.sync_command("sed -e '/unstable/,$ s/enabled=1/enabled=0/' -i /etc/yum.repos.d/GenieDB.repo")
 
 class Cloudfabric(Tailor):
     def install(self, hostnames=[]):
         actions = [
-            Try(AddRepos({'debian':['deb http://packages.geniedb.com/debian unstable/',
+            Try(AddRepos({'debian':['deb http://packages.geniedb.com/debian {channel}/',
                                     'deb http://backports.debian.org/debian-backports squeeze-backports main'],
                           'redhat':['http://mirror.bytemark.co.uk/fedora/epel/6/i386/epel-release-6-7.noarch.rpm',
                                     'http://packages.geniedb.com/centos/unstable/geniedb-release-1-2.noarch.rpm'],
                           'centos':['http://mirror.bytemark.co.uk/fedora/epel/6/i386/epel-release-6-7.noarch.rpm',
                                     'http://packages.geniedb.com/centos/unstable/geniedb-release-1-2.noarch.rpm']})),
+            Try(RHChannel()),
             Try(UpdateRepos()),
             Try(Install('{cloudfabric_packages}')),
             Try(Command("{service_command} cloudfabric stop"), DEBUG),
@@ -64,6 +74,7 @@ class Cloudfabric(Tailor):
     
     @staticmethod
     def setup_argparse(parser):
+        parser.add_argument('--channel','-c', choices=['stable','unstable'], default='unstable', help='Which channel of cloudfabric software to install.')
         subparsers = parser.add_subparsers(title='cloudfabric-command', dest='cloudfabric')
         install_parser = subparsers.add_parser('install', help='install cloudfabric on the given hosts.')
         install_parser.add_argument('install_hosts', type=str, nargs='*')
@@ -75,6 +86,7 @@ class Cloudfabric(Tailor):
     
     def argparse(self, params):
         self.properties['netname']= params.netname
+        self.properties['channel']= params.channel
         self.distro_properties['debian'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric exampleclient cloudfabric-mysql mysql-server-5.1'}
         self.distro_properties['redhat'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'}
         self.distro_properties['centos'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'}

@@ -203,8 +203,9 @@ class AddRepos(Action):
 
     def debianrepo(self, host, repo):
         repo = host.interpolate(repo) 
+        filename = sub('(^deb |http://|ftp://|https://|[^.\w])','',repo)
         self.logger.info("Setting up repository '%s' on host '%s'", repo, host.hostname)
-        host.sync_command('echo "' + repo + '" >> /etc/apt/sources.list')
+        host.sync_command('echo "' + repo + '" > /etc/apt/sources.list.d/'+filename+'.list')
 
     def redhatrepo(self, host, repo):
         self.logger.info("Setting up repository '%s' on host '%s'", repo, host.hostname)
