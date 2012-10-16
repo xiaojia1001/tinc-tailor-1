@@ -28,10 +28,12 @@ or
 `hosts.list`
 ------------
 
-This is a list of hostnames, one per line, that `tinc-tailor` considers to be
-in the cluster.  You should ensure the hostnames have no hyphens in them as
-`tinc` does not like this. You should also ensure all the hosts and your
-workstation can reach each other by these hostnames.
+This is a INI file where each section is a hostname that `tinc-tailor` will
+considers to be in the cluster.  You should ensure the hostnames have no
+hyphens in them as `tinc` does not like this. You should also ensure all the
+hosts and your workstation can reach each other by these hostnames.
+
+You may also add a `[DEFAULT]` section which sets defaults for all hosts.
 
 You may use IP addresses instead of hostnames.
 
@@ -86,26 +88,10 @@ options
 *  `--help`
    Show a brief summary of the options and comamnds that `tinc-tailor` accepts.
 
-*  `--host HOST`
    `--hosts-file FILENAME`
-   These options control `tinc-tailor`'s awerness of hosts in the cluster. It
-   combines the hosts given with the `--host` option with those read from the
-   file specified with the `--hosts-file` option. The `--host` option may be
-   given multiple times.
-
-   Only if neither of these are set does `tinc-tailor` read from the default
-   file `hosts.list`.
-
-*  `--key KEYFILE`
-   This option, which can be specified multiple times, specifies an ssh private
-   key file to try to use to connect to the nodes.  In all cases
-   `~/.ssh/id_rsa` and `~/.ssh/id_dsa` are tried to.  Note that `~/.ssh/config`
-   is ignored.
-
-*  `--netname NETNAME`
-   For `tinc`, this specifies the name of the vpn network to create, and the
-   name of the interface to create. For `cloudfabric` this specifies the
-   interface for inter-node communication.
+   
+   This file tells `tinc-tailor` to read the given file instead of `hosts.list`
+   (described above).
 
 *  `--log-level (DEBUG|INFO|WARNING|ERROR|FATAL)`
 
@@ -123,8 +109,10 @@ examples
 Installing two nodes:
 
     $ cat > hosts.list
-    node1.publicnetwork.com
-    node2.publicnetwork.com
+    [DEFAULT]
+    netname=cf
+    [node1.publicnetwork.com]
+    [node2.publicnetwork.com]
     $ ./tinc-tailor tinc install node1.publicnetwork.com node2.publicnetwork.com
 
 Verifying they work:
@@ -134,15 +122,16 @@ Verifying they work:
 Adding an extra node:
 
     $ cat >> host.list
-    ondemand.cloudprovider.com
+    [ondemand.cloudprovider.com]
     $ ./tinc-tailor tinc install ondemand.cloudprovider.com
 
 Removing the first node:
 
     $ ./tinc-tailor tinc remove node2.publicnetwork.com
     $ cat > host.list
-    node1.publicnetwork.com
-    ondemand.cloudprovider.com
+    [node1.publicnetwork.com]
+    [ondemand.cloudprovider.com]
+    key=/home/user/key.pem
 
 Running a command on all the nodes:
 

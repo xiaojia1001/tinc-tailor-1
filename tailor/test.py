@@ -148,10 +148,6 @@ class TestRunner(Tailor):
     def setup_argparse(parser):
         parser.add_argument('--xml', type=FileType(mode='w'))
         parser.add_argument('tests', type=str, nargs='*')
-    
-    def argparse(self, params):
-        self.properties['netname']= params.netname
-        self.params = params
 
 class UnsatisfiedRequirement(Exception):
     pass

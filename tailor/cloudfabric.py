@@ -85,7 +85,6 @@ class Cloudfabric(Tailor):
         subparsers.add_parser('refresh', help='reload cloudfabric configuration on all hosts.')
     
     def argparse(self, params):
-        self.properties['netname']= params.netname
         self.properties['channel']= params.channel
         self.distro_properties['debian'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric exampleclient cloudfabric-mysql mysql-server-5.1'}
         self.distro_properties['redhat'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'}

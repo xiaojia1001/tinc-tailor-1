@@ -74,7 +74,6 @@ class Tinc(Tailor):
         subparsers.add_parser('refresh', help='reload tinc configuration on all hosts.')
     
     def argparse(self, params):
-        self.properties['netname']= params.netname
         self.properties['tinc_package'] = 'tinc'
         self.params = params
     

@@ -9,6 +9,7 @@ from argparse import ArgumentParser, FileType
 from logging import getLogger, DEBUG, StreamHandler, Formatter, INFO,\
     getLevelName, WARNING
 from copy import copy
+from ConfigParser import ConfigParser
 
 class ColoredConsoleHandler(StreamHandler):
     def emit(self, record):
@@ -33,10 +34,7 @@ class ColoredConsoleHandler(StreamHandler):
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='''tinc-tailor is a tool for managing a cluster of CloudFabric servers using tinc as a VPN.''')
-    parser.add_argument('-H','--host', dest='hosts', type=str, metavar='HOSTNAME', default=[], action='append', help='''This option, which can be specified multiple times, tells tinc-tailor which hosts are in the cluster. If this option or --host-file is set, the default hosts.list file is not read.''')    
-    parser.add_argument('-f','--hosts-file', type=FileType('r'), help='''Each line in the given file is interpreted as a host, as if given to the --host option.''')
-    parser.add_argument('-n','--netname', type=str, default='cf', help='''For tinc, this specifies the name of the vpn network to create, and the name of the interface to create. For cloudfabric this specifies the interface for inter-node communication.''')
-    parser.add_argument('-k','--key', type=str, default=[], action='append', help='''This option, which can be specified multiple times, specifies an ssh private key file to try to use to connect to the nodes.  In all cases ~/.ssh/id_rsa and ~/.ssh/id_dsa are tried to.  Note that ~/.ssh/config is ignored.''')
+    parser.add_argument('-f','--hosts-file', type=FileType('r'), help='''Definition of the cluster.''')
     parser.add_argument('-l','--log-level', default=WARNING, help='''This option determines the amount of information to be logged. The default is WARNING, which prints very little.''')
     parser.add_argument('--global-log-level', default=None, help='As --log-level, but also log higher detail from python libraries used, for example for debugging the SSH connection.''')
     subparsers = parser.add_subparsers(title='tool', dest='tool', description='''Sub-system to configure. You can run `tinc-tailor TOOL -h` to see help specific to that sub-system.''')
@@ -56,10 +54,11 @@ if __name__ == '__main__':
     logger.setLevel(params.log_level)
     logger.debug("Starting tailor")
 
-    if params.hosts_file is None and len(params.hosts) is 0:
+    if params.hosts_file is None:
         params.hosts_file = open('hosts.list')
-    if params.hosts_file is not None:
-        params.hosts.extend(line.strip() for line in params.hosts_file.readlines())
+    config = ConfigParser()
+    config.readfp(params.hosts_file)
+    params.hosts = dict((hostname, dict(config.items(hostname))) for hostname in config.sections())
     
     if params.tool == 'check':
         Check(params).run()

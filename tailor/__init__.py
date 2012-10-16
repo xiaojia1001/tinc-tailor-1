@@ -117,20 +117,22 @@ class Host(object):
         return properties
 
 class Hostlist(object):
-    def __init__(self,hosts=[], properties={}, distro_properties={}):
+    def __init__(self,hosts={}, properties={}, distro_properties={}):
         self.properties = properties
         self.distro_properties = distro_properties
         self.hosts=[]
         self.logger = getLogger('tailor.hostlist')
         self.net = 33
         self.hostnum = 1
-        for host in hosts:
-            self.add_host(host)
+        for hostname, hostprops in hosts.items():
+            self.add_host(hostname, hostprops)
     
-    def add_host(self, hostname):
+    def add_host(self, hostname, hostprops = {}):
         if self.hostnum >= 255:
             raise TooManyHostsException()
-        host = Host(hostname, self.properties, self.distro_properties)
+        props = self.properties.copy()
+        props.update(hostprops)
+        host = Host(hostname, props, self.distro_properties)
         host.properties['number'] = str(self.hostnum)
         host.properties['private_ipv4_subnet'] = '192.168.'+str(self.net)+'.'+ str(self.hostnum)+'/32'
         host.properties['private_ipv4_address'] = '192.168.'+str(self.net)+'.'+ str(self.hostnum)
@@ -370,7 +372,7 @@ class Tailor(object):
         pass
     
     def argparse(self, params):
-        pass
+        self.params = params
     
     def get_file(self, filename):
         return path.join(self.root, filename)
