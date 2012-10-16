@@ -171,10 +171,12 @@ class Test(TestCase):
             force = "-f"
         else:
             force = ""
-        if password is None:
-            password = ""
+        if password is not None:
+            password = '-p'+password
+        elif host.properties.has_key('mysql_password'):
+            password = "-p"+host.properties['mysql_password']
         else:
-            password = "-p"+password
+            password = ""
         chan = host.async_command("mysql {force} {password} {database}".format(database=database, password=password, force=force))
         chan.sendall(query)
         chan.shutdown_write()
