@@ -48,7 +48,7 @@ class MultiTestResult(TestResult):
 
 class TailorTestResult(TestResult):
     def __init__(self, logger, *args, **kwargs):
-        super(TailorTestResult, self).__init__(self, *args, **kwargs)
+        super(TailorTestResult, self).__init__(*args, **kwargs)
         self.logger = logger
         self.testsRunThisModule = 0
         self.modulesRun = 0
