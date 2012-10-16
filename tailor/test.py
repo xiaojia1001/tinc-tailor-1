@@ -147,9 +147,6 @@ class TestRunner(Tailor):
         parser.add_argument('--xml', type=FileType(mode='w'))
         parser.add_argument('tests', type=str, nargs='*')
 
-class UnsatisfiedRequirement(Exception):
-    pass
-
 class Test(TestCase):
     def __init__(self,  *args, **kwargs):
         super(Test, self).__init__(*args, **kwargs)
