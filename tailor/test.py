@@ -9,8 +9,12 @@ from time import time
 from itertools import chain
 from traceback import print_exception
 from logging import getLogger, INFO
-from unittest import TestCase, defaultTestLoader, TestResult
-from unittest.result import failfast
+try:
+    from unittest import TestCase, defaultTestLoader, TestResult
+    from unittest.result import failfast
+except:
+    from unittest2 import TestCase, defaultTestLoader, TestResult
+    from unittest2.result import failfast
 from tailor import Tailor, Host
 from argparse import FileType
 
