@@ -4,7 +4,6 @@ Created on 2 Oct 2012
 @author: david
 '''
 
-from sys import path
 from time import time
 from itertools import chain
 from traceback import print_exception
@@ -15,8 +14,6 @@ from tailor import Tailor, Host
 from argparse import FileType
 
 NORMAL='\x1b[0m'
-
-path.append('tests')
 
 class MultiTestResult(TestResult):
     def __init__(self, results, *args, **kwargs):
@@ -137,8 +134,8 @@ class TestRunner(Tailor):
         if not self.logger.isEnabledFor(INFO):
             self.logger.setLevel(INFO)
         Test.hosts = self.hosts
-        if self.params.tests is None:
-            tests = defaultTestLoader.discover('tests', '*')
+        if len(self.params.tests) is 0:
+            tests = defaultTestLoader.discover('tests', '*.py')
         else:
             tests = defaultTestLoader.loadTestsFromNames(self.params.tests)
 
