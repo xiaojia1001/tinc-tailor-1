@@ -53,8 +53,9 @@ class TailorTestResult(TestResult):
 
     def stopTestRun(self):
         super(TailorTestResult, self).stopTestRun()
-        self.logger.info("[----------]"+NORMAL+" %d tests from %s (%d ms total)", self.testsRunThisModule, self.lastModule, (time()-self.startModuleTime)*1000)
-        self.logger.info(" ")
+        if self.lastModule is not None:
+            self.logger.info("[----------]"+NORMAL+" %d tests from %s (%d ms total)", self.testsRunThisModule, self.lastModule, (time()-self.startModuleTime)*1000)
+            self.logger.info(" ")
         self.logger.info("[----------]"+NORMAL+" Global test environment tear-down")
         self.logger.info("[==========]"+NORMAL+" %d tests from %d test cases ran. (%d ms total)", self.testsRun, self.modulesRun, (time()-self.startRunTime)*1000)
         self.logger.info("[  PASSED  ]"+NORMAL+" %d tests.", self.testsRun - len(self.failures) - len(self.errors) - len(self.skipped) - len(self.unexpectedSuccesses))
