@@ -10,6 +10,7 @@ from logging import getLogger, DEBUG, StreamHandler, Formatter, INFO,\
     getLevelName, WARNING
 from copy import copy
 from ConfigParser import ConfigParser
+from tailor import can_color
 
 class ColoredConsoleHandler(StreamHandler):
     def emit(self, record):
@@ -47,7 +48,10 @@ if __name__ == '__main__':
     root = getLogger('')
     if params.global_log_level is not None:
         root.setLevel(params.global_log_level)
-    handler = ColoredConsoleHandler()
+    if can_color():
+        handler = ColoredConsoleHandler()
+    else:
+        handler = StreamHandler()
     handler.setFormatter(Formatter('%(name)s: %(message)s'))
     root.addHandler(handler)
     logger = getLogger('tailor')

@@ -15,12 +15,15 @@ try:
 except:
     from unittest2 import TestCase, defaultTestLoader, TestResult
     from unittest2.result import failfast
-from tailor import Tailor, Host
+from tailor import Tailor, Host, can_color
 from argparse import FileType
 
 path.append('tests')
 
-NORMAL='\x1b[0m'
+if can_color():
+    NORMAL='\x1b[0m'
+else:
+    NORMAL=''
 
 class MultiTestResult(TestResult):
     def __init__(self, results, *args, **kwargs):

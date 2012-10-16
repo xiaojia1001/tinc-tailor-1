@@ -5,6 +5,17 @@ from paramiko import SSHClient, AutoAddPolicy
 from logging import getLogger, WARNING
 from stat import S_ISDIR, S_ISREG, S_ISLNK
 from re import sub
+from subprocess import Popen, PIPE
+
+def can_color():
+    try:
+        p = Popen(['tput','colors'],stdout=PIPE, stderr=PIPE )
+        (stdout, _) = p.communicate()
+        if int(stdout) > 2:
+            return True
+    except:
+        pass
+    return False
 
 class TailorException(Exception):
     pass
