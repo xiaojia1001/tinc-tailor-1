@@ -218,18 +218,18 @@ class Test(TestCase):
             self.assertEqual(0, status, "Script failed.\nHost: {0}\nScript: {1}\nResult: {2}".format(host.hostname,script, result))
         return result
 
-    def assertSqlEqual(self, query, desiredResult, hosts=None, msg=None):
+    def assertSqlEqual(self, query, desiredResult, hosts=None, msg=None, *args, **kwargs):
         if hosts is None:
             hosts = self.hosts
         for host in hosts:
-            self.assertEqual(desiredResult, self.assertSqlSuccess(query, host), msg)
+            self.assertEqual(desiredResult, self.assertSqlSuccess(query, host, *args, **kwargs), msg)
 
-    def assertSqlSame(self, query, hosts=None, msg=None):
+    def assertSqlSame(self, query, hosts=None, msg=None, *args, **kwargs):
         result = None
         if hosts is None:
             hosts = self.hosts
         for host in hosts:
-            thisResult = self.assertSqlSuccess(query, host)
+            thisResult = self.assertSqlSuccess(query, host, *args, **kwargs)
             if result is None:
                 result = thisResult
             else:
@@ -267,7 +267,7 @@ class GenieTest(Test):
         """)
 
     def tearDown(self):
-        super(GenieTest,self).tearDown()
         self.assertScriptSuccess("""
         java -cp /usr/share/java/DatabaseAdapter.jar com.sleepycat.je.util.DbDump -h /var/lib/cloudfabric -l | grep '[^$].\$$' | cut -d . -f 1 | xargs -I{} echo rm -rf /var/lib/mysql/{}
         """)
+        super(GenieTest,self).tearDown()
