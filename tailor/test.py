@@ -154,6 +154,8 @@ class Test(TestCase):
     def __init__(self,  *args, **kwargs):
         super(Test, self).__init__(*args, **kwargs)
         self.logger = getLogger('tailor.test.'+self.__class__.__name__)
+        self.addTypeEqualityFunc(str, 'assertMultiLineEqual')
+        self.maxDiff = None
     
     def __enter__(self):
         self.setUp()
@@ -175,10 +177,12 @@ class Test(TestCase):
             password = "-p"+host.properties['mysql_password']
         else:
             password = ""
+        host.logger.debug('Running SQL:\n'+query)
         chan = host.async_command("mysql {force} {password} {database}".format(database=database, password=password, force=force))
         chan.sendall(query)
         chan.shutdown_write()
         result = "".join(chan.makefile())
+        host.logger.debug(result)
         chan.recv_exit_status()
         return (result, chan.exit_status)
 
@@ -189,16 +193,18 @@ class Test(TestCase):
             hosts = [hosts]
         for host in hosts:
             result, status = self.runSql(query, host, *args, **kwargs)
-            self.assertEqual(0, status, "Query failed")
+            self.assertEqual(0, status, "Query Failed.\nHost: {0}\nQuery: {1}\nResult: {2}".format(host.hostname, query, result))
         return result
 
     def runScript(self, script, host=None):
         if host is None:
             host = self.hosts.hosts[0]
+        host.logger.debug('Running script:\n'+script)
         chan = host.async_command('sh')
         chan.sendall(script)
         chan.shutdown_write()
         result = "".join(chan.makefile())
+        host.logger.debug(result)
         chan.recv_exit_status()
         return (result, chan.exit_status)
 
@@ -209,7 +215,7 @@ class Test(TestCase):
             hosts = [hosts]
         for host in hosts:
             result, status = self.runScript(script, host, *args, **kwargs)
-            self.assertEqual(0, status, "Script failed")
+            self.assertEqual(0, status, "Script failed.\nHost: {0}\nScript: {1}\nResult: {2}".format(host.hostname,script, result))
         return result
 
     def assertSqlEqual(self, query, desiredResult, hosts=None, msg=None):
