@@ -37,7 +37,10 @@ class Host(object):
         self.client = SSHClient()
         self.client.set_missing_host_key_policy(AutoAddPolicy())
         self.client.load_system_host_keys()
-        self.client.connect(hostname, username='root', key_filename=properties['key'])
+        key_filename=None
+        if properties.has_key('key'):
+            key_filename=properties['key']
+        self.client.connect(hostname, username='root', key_filename=key_filename)
         self.sftp = self.client.open_sftp()
         self.properties = self.get_properties(distro_properties)
         self.properties.update(properties)
@@ -380,8 +383,6 @@ class Tailor(object):
         self.distro_properties = {}
         if params is not None:
             self.argparse(params)
-        if not self.properties.has_key('key'):
-            self.properties['key']=params.key
         self.hosts = Hostlist(hosts=params.hosts, properties=self.properties, distro_properties=self.distro_properties)
     
     @staticmethod
