@@ -4,6 +4,7 @@ from os import walk, path, remove
 from paramiko import SSHClient, AutoAddPolicy
 from logging import getLogger, WARNING
 from stat import S_ISDIR, S_ISREG, S_ISLNK
+from re import sub
 
 class TailorException(Exception):
     pass
@@ -71,6 +72,7 @@ class Host(object):
                'install_command': 'apt-get -y --force-yes install',
                'upgrade_command': 'apt-get -y --force-yes upgrade',
                'remove_command': 'apt-get -y --force-yes remove',
+               'removerepo_command': '',
                'service_command': 'invoke-rc.d'
             },
             'redhat': {
@@ -79,6 +81,7 @@ class Host(object):
                'install_command': 'yum -y install',
                'upgrade_command': 'yum -y upgrade',
                'remove_command': 'yum -y remove',
+               'removerepo_command': 'yum -y remove',
                'service_command': 'service'
             },
             'centos': {
@@ -87,6 +90,7 @@ class Host(object):
                'install_command': 'yum -y install',
                'upgrade_command': 'yum -y upgrade',
                'remove_command': 'yum -y remove',
+               'removerepo_command': 'yum -y remove',
                'service_command': 'service'
             }
         }
@@ -229,6 +233,19 @@ class AddRepos(Action):
                         pass
         except KeyError:
             pass
+
+class RemoveRepos(AddRepos):
+    def debianrepo(self, host, repo):
+        repo = host.interpolate(repo)
+        filename = sub('(^deb |http://|ftp://|https://|[^.\w])','',repo)
+        self.logger.info("Removing repository '%s' on host '%s'", repo, host.hostname)
+        host.sync_command('rm /etc/apt/sources.list.d/'+filename+'.list')
+
+    def redhatrepo(self, host, repo):
+        self.logger.info("Removing repository '%s' on host '%s'", repo, host.hostname)
+        packagename = re.sub(r'^.*/([^/]*?)(\.rpm)?$',r'\1', host.interpolate(repo))
+        host.sync_command(host.interpolate('{removerepo_command} ' + packagename))
+
 
 class UpdateRepos(Command):
     def __init__(self):
