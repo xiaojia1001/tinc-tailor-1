@@ -23,6 +23,8 @@ class SimultaniousInsert(GenieTest):
 class SingleNodeMultiInsert(GenieTest):
     """Test deletes are replicated"""
     def setUp(self):
+        if len(self.hosts.hosts) < 1:
+            self.skipTest("Insufficient Hosts")
         super(SingleNodeMultiInsert, self).setUp()
         self.master = self.hosts.hosts[0]
         self.assertSqlSuccess("DROP TABLE IF EXISTS t1;", self.master, database='test')
