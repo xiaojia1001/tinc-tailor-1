@@ -119,23 +119,3 @@ class ConflictResolution(GenieTest):
     def tearDown(self):
         self.runSql("DROP TABLE t1;", self.master, database='test')
         super(ConflictResolution,self).tearDown()
-
-class AutoIncrement(GenieTest):
-    """Test deletes are replicated"""
-    def setUp(self):
-        if len(self.hosts.hosts) < 2:
-            self.skipTest("Insufficient Hosts")
-        super(AutoIncrement, self).setUp()
-        self.master = self.hosts.hosts[0]
-        self.slave = self.hosts.hosts[1]
-        self.assertSqlSuccess("DROP TABLE IF EXISTS t1;", self.master, database='test')
-
-    def runTest(self):
-        self.assertSqlSuccess("CREATE TABLE t1 (c1 INT AUTO_INCREMENT PRIMARY KEY, c2 INT) ENGINE=GenieDB;", hosts=self.master, database='test')
-        self.assertSqlSuccess("INSERT INTO t1 (c2) VALUES (1);", database='test')
-        self.assertSqlSame("SELECT * FROM t1 ORDER BY c1 DESC;", database='test')
-        self.assertSqlEqual("SELECT count(*) AS count FROM t1;", "count\n2\n", database='test')
-
-    def tearDown(self):
-        self.runSql("DROP TABLE t1;", self.master, database='test')
-        super(AutoIncrement,self).tearDown()
