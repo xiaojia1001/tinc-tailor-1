@@ -155,7 +155,7 @@ class TestJUnitXmlResult(unittest.TestCase):
         output = self.get_output()
         expected = """<testsuite errors="0" failures="0" name="" tests="1" time="0.000">
 <testcase classname="junitxml.tests.test_junitxml.Skips" name="test_me" time="0.000">
-<skip>yo</skip>
+<skipped>yo</skipped>
 </testcase>
 </testsuite>
 """
@@ -262,7 +262,7 @@ class TestWellFormedXml(unittest.TestCase):
         doc = self._run_and_parse_test(SkipWithLt())
         if self.has_skip:
             self.assertEqual('2.7 <= version',
-                doc.getElementsByTagName("skip")[0].firstChild.nodeValue)
+                doc.getElementsByTagName("skipped")[0].firstChild.nodeValue)
         else:
             self.assertTrue(
                 doc.getElementsByTagName("failure")[0].firstChild.nodeValue

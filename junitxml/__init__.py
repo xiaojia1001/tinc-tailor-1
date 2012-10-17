@@ -198,7 +198,7 @@ class JUnitXmlResult(unittest.TestResult):
             pass
         self._test_case_string(test)
         self._results.append('>\n')
-        self._results.append('<skip>%s</skip>\n</testcase>\n'% _escape_attr(reason))
+        self._results.append('<skipped>%s</skipped>\n</testcase>\n'% _escape_attr(reason))
 
     def addUnexpectedSuccess(self, test):
         try:
