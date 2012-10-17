@@ -15,7 +15,7 @@ class TableReplication(GenieTest):
         self.assertSqlSame("SHOW CREATE TABLE t1;", database='test')
 
     def tearDown(self):
-        self.runSql("DROP TABLE t1;", self.master)
+        self.runSql("DROP TABLE t1;", self.master, database='test')
         super(TableReplication,self).tearDown()
 
 class DatabaseReplication(GenieTest):
@@ -53,5 +53,5 @@ class DataReplication(GenieTest):
         self.assertSqlEqual("SELECT * FROM t1 ORDER BY c1 DESC;", "c1\n4\n3\n2\n1\n", database='test')
 
     def tearDown(self):
-        self.runSql("DROP TABLE t1;", self.master)
+        self.runSql("DROP TABLE t1;", self.master, database='test')
         super(DataReplication,self).tearDown()
