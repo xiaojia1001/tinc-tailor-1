@@ -64,6 +64,10 @@ command reference
    defaults to `unstable` controls which distribution channel of cloudfabric is
    installed.
 
+*  `tinc-tailor cloudfabric upgrade [HOST]...`
+
+   This upgrades cloudfabric on the given hosts.
+
 *  `tinc-tailor cloudfabric remove [HOST]...`
 
    This removes cloudfabric from the given hosts.
