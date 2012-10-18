@@ -298,6 +298,46 @@ class Test(TestCase):
                 self.assertEqual(result, thisResult, msg)
 
 class GenieTest(Test):
+    def __init__(self, *args, **kwargs):
+        super(GenieTest, self).__init__(*args, **kwargs)
+        self._partition = None
+
+    def partition(self, partitioned_hosts):
+        if self._partition is not None:
+            self.fail("Already Partitioned")
+        if isinstance(partitioned_hosts, Host):
+            partitioned_hosts = [partitioned_hosts]
+        complement = []
+        for host in self.hosts:
+            if host not in partitioned_hosts:
+                complement.append(host)
+        self._partition = []
+        for host in self.hosts:
+            if host in partitioned_hosts:
+                others = complement
+            else:
+                others = partitioned_hosts
+            for other in others:
+                fwrule = "-p udp -m udp -s {source} --dport 5502 -j REJECT".format(source=other.properties['connect_to'])
+                self.logger.debug("Adding firewall rule to '%s': %s", host.hostname, fwrule)
+                host.sync_command("iptables -I INPUT "+fwrule)
+                self._partition.append((host, fwrule))
+                fwrule = "-p udp -m udp -s {source} --dport 5502 -j REJECT".format(source=other.properties['private_ipv4_address'])
+                self.logger.debug("Adding firewall rule to '%s': %s", host.hostname, fwrule)
+                host.sync_command("iptables -I INPUT "+fwrule)
+                self._partition.append((host, fwrule))
+
+    def unpartition(self):
+        if self._partition is None:
+            return
+        for host, fwrule in reversed(self._partition):
+            try:
+                self.logger.debug("Deleting firewall rule from '%s': %s", host.hostname, fwrule)
+                host.sync_command("iptables -D INPUT "+fwrule)
+            except:
+                pass
+        self._partition = None
+
     def setUp(self):
         super(GenieTest,self).setUp()
         self.assertScriptSuccess("""
@@ -312,6 +352,7 @@ class GenieTest(Test):
         """)
 
     def tearDown(self):
+        self.unpartition()
         self.assertScriptSuccess("""
         java -cp /usr/share/java/DatabaseAdapter.jar com.sleepycat.je.util.DbDump -h /var/lib/cloudfabric -l | grep '[^$].\$$' | cut -d . -f 1 | xargs -I{} echo rm -rf /var/lib/mysql/{}
         """)
