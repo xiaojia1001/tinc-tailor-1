@@ -1,3 +1,7 @@
+"""
+Tests related to replication.
+"""
+
 from tailor.test import GenieTest
 
 class TableReplication(GenieTest):
@@ -57,7 +61,7 @@ class InsertReplication(GenieTest):
         super(InsertReplication,self).tearDown()
 
 class UniqueSecondaryReplication(GenieTest):
-    """Test inserts are replicated"""
+    """Test secondary unique keys are respected across different hosts."""
     def setUp(self):
         if len(self.hosts.hosts) < 2:
             self.skipTest("Insufficient Hosts")
@@ -76,7 +80,7 @@ class UniqueSecondaryReplication(GenieTest):
         super(UniqueSecondaryReplication,self).tearDown()
 
 class UpdateReplication(GenieTest):
-    """Test deletes are replicated"""
+    """Test updates are replicated"""
     def setUp(self):
         if len(self.hosts.hosts) < 2:
             self.skipTest("Insufficient Hosts")
@@ -120,7 +124,7 @@ class DeleteReplication(GenieTest):
         super(DeleteReplication,self).tearDown()
 
 class ConflictResolution(GenieTest):
-    """Test deletes are replicated"""
+    """Test two version of the same record are reconciled."""
     def setUp(self):
         if len(self.hosts.hosts) < 2:
             self.skipTest("Insufficient Hosts")

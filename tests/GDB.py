@@ -1,3 +1,7 @@
+"""
+Tests for issues in JIRA.
+"""
+
 from tailor.test import GenieTest
 from os import path
 

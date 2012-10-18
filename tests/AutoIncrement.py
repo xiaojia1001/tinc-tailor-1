@@ -1,3 +1,7 @@
+"""
+Tests related to auto increment.
+"""
+
 from tailor.test import GenieTest
 
 class SimultaniousInsert(GenieTest):

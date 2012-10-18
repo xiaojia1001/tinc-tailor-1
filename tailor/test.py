@@ -89,6 +89,7 @@ class TailorTestResult(TestResult):
 
         self.testsRunThisModule += 1
         self.logger.info("[ RUN      ]"+NORMAL+" %s", test.id())
+        self.logger.debug("[ INFO     ] %s", test.__doc__)
         self.startTestTime = time()
 
     @failfast
