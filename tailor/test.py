@@ -158,6 +158,32 @@ class TestRunner(Tailor):
         parser.add_argument('--xml', type=FileType(mode='w'))
         parser.add_argument('tests', type=str, nargs='*')
 
+class RunSql(object):
+    def __init__(self, query, host=None, database="", password=None, force=False):
+        self.host = host
+        if self.host is None:
+            self.host = self.hosts.hosts[0]
+        if force:
+            force = "-f"
+        else:
+            force = ""
+        if password is not None:
+            password = '-p'+password
+        elif self.host.properties.has_key('mysql_password'):
+            password = "-p"+self.host.properties['mysql_password']
+        else:
+            password = ""
+        self.host.logger.debug('Running SQL:\n'+query)
+        self.chan = self.host.async_command("mysql {force} {password} {database}".format(database=database, password=password, force=force))
+        self.chan.sendall(query)
+    
+    def get(self):
+        self.chan.shutdown_write()
+        result = "".join(self.chan.makefile())
+        self.host.logger.debug(result)
+        self.chan.recv_exit_status()
+        return (result, self.chan.exit_status)
+
 class Test(TestCase):
     def __init__(self,  *args, **kwargs):
         super(Test, self).__init__(*args, **kwargs)
@@ -172,35 +198,24 @@ class Test(TestCase):
     def __exit__(self, exc_type, exc_value, traceback):
         self.tearDown()
 
-    def runSql(self, query, host=None, database="", password=None, force=False):
-        if host is None:
-            host = self.hosts.hosts[0]
-        if force:
-            force = "-f"
-        else:
-            force = ""
-        if password is not None:
-            password = '-p'+password
-        elif host.properties.has_key('mysql_password'):
-            password = "-p"+host.properties['mysql_password']
-        else:
-            password = ""
-        host.logger.debug('Running SQL:\n'+query)
-        chan = host.async_command("mysql {force} {password} {database}".format(database=database, password=password, force=force))
-        chan.sendall(query)
-        chan.shutdown_write()
-        result = "".join(chan.makefile())
-        host.logger.debug(result)
-        chan.recv_exit_status()
-        return (result, chan.exit_status)
+    def startRunSql(self):
+        pass
+    def endRunSql(self):
+        pass
+
+    def runSql(self, *args, **kwargs):
+        return RunSql(*args, **kwargs).get()
 
     def assertSqlSuccess(self, query, hosts=None, *args, **kwargs):
         if hosts is None:
             hosts = self.hosts
         if isinstance(hosts, Host):
             hosts = [hosts]
+        sqls = []
         for host in hosts:
-            result, status = self.runSql(query, host, *args, **kwargs)
+            sqls.append(RunSql(query, host, *args, **kwargs))
+        for sql in sqls:
+            (result, status) = sql.get() 
             self.assertEqual(0, status, "Query Failed.\nHost: {0}\nQuery: {1}\nResult: {2}".format(host.hostname, query, result))
         return result
 
@@ -209,8 +224,11 @@ class Test(TestCase):
             hosts = self.hosts
         if isinstance(hosts, Host):
             hosts = [hosts]
+        sqls = []
         for host in hosts:
-            result, status = self.runSql(query, host, *args, **kwargs)
+            sqls.append(RunSql(query, host, *args, **kwargs))
+        for sql in sqls:
+            (result, status) = sql.get() 
             self.assertNotEqual(0, status, "Query Succeeded for some reason.\nHost: {0}\nQuery: {1}\nResult: {2}".format(host.hostname, query, result))
         return result
 
@@ -239,15 +257,24 @@ class Test(TestCase):
     def assertSqlEqual(self, query, desiredResult, hosts=None, msg=None, *args, **kwargs):
         if hosts is None:
             hosts = self.hosts
+        sqls = []
         for host in hosts:
-            self.assertEqual(desiredResult, self.assertSqlSuccess(query, host, *args, **kwargs), msg)
+            sqls.append(RunSql(query, host, *args, **kwargs))
+        for sql in sqls:
+            (result, status) = sql.get()
+            self.assertEqual(0, status, "Query Failed.\nHost: {0}\nQuery: {1}\nResult: {2}".format(host.hostname, query, result))
+            self.assertEqual(desiredResult, result, msg)
 
     def assertSqlSame(self, query, hosts=None, msg=None, *args, **kwargs):
         result = None
         if hosts is None:
             hosts = self.hosts
+        sqls = []
         for host in hosts:
-            thisResult = self.assertSqlSuccess(query, host, *args, **kwargs)
+            sqls.append(RunSql(query, host, *args, **kwargs))
+        for sql in sqls:
+            (thisResult, status) = sql.get()
+            self.assertEqual(0, status, "Query Failed.\nHost: {0}\nQuery: {1}\nResult: {2}".format(host.hostname, query, thisResult))
             if result is None:
                 result = thisResult
             else:
