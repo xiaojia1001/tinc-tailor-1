@@ -203,6 +203,16 @@ class Test(TestCase):
             self.assertEqual(0, status, "Query Failed.\nHost: {0}\nQuery: {1}\nResult: {2}".format(host.hostname, query, result))
         return result
 
+    def assertSqlFailure(self, query, hosts=None, *args, **kwargs):
+        if hosts is None:
+            hosts = self.hosts
+        if isinstance(hosts, Host):
+            hosts = [hosts]
+        for host in hosts:
+            result, status = self.runSql(query, host, *args, **kwargs)
+            self.assertNotEqual(0, status, "Query Succeeded for some reason.\nHost: {0}\nQuery: {1}\nResult: {2}".format(host.hostname, query, result))
+        return result
+
     def runScript(self, script, host=None):
         if host is None:
             host = self.hosts.hosts[0]
