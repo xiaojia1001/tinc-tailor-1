@@ -28,14 +28,16 @@ or
 `hosts.list`
 ------------
 
-This is a INI file where each section is a hostname that `tinc-tailor` will
-considers to be in the cluster.  You should ensure the hostnames have no
-hyphens in them as `tinc` does not like this. You should also ensure all the
-hosts and your workstation can reach each other by these hostnames.
+This is a INI file where each section is a host that `tinc-tailor` will
+considers to be in the cluster.  The name of the section should be a symbolic
+name for the host, with no hyphens.
+
+You must set the `connect_to` parameter for each host to a hostname or IP
+address that all the other hosts and your workstation can use to find that
+host. This parameter defaults to the section name, so if that is a hostname
+you are good to go.
 
 You may also add a `[DEFAULT]` section which sets defaults for all hosts.
-
-You may use IP addresses instead of hostnames.
 
 
 command reference
@@ -110,10 +112,12 @@ Installing two nodes:
 
     $ cat > hosts.list
     [DEFAULT]
-    netname=cf
-    [node1.publicnetwork.com]
-    [node2.publicnetwork.com]
-    $ ./tinc-tailor tinc install node1.publicnetwork.com node2.publicnetwork.com
+    netname = cf
+    [node1]
+    connect_to = node1.publicnetwork.com
+    [node2]
+    connect_to = 203.0.113.3
+    $ ./tinc-tailor tinc install
 
 Verifying they work:
 
@@ -122,19 +126,23 @@ Verifying they work:
 Adding an extra node:
 
     $ cat >> host.list
-    [ondemand.cloudprovider.com]
-    $ ./tinc-tailor tinc install ondemand.cloudprovider.com
+    [ondemand]
+    connect_to = dc3-198-51-100-3.cloudprovider.com
+    key = /home/user/key.pem
+    $ ./tinc-tailor tinc install ondemand
 
 Removing the first node:
 
-    $ ./tinc-tailor tinc remove node2.publicnetwork.com
+    $ ./tinc-tailor tinc remove node2
     $ cat > host.list
-    [node1.publicnetwork.com]
-    [ondemand.cloudprovider.com]
-    key=/home/user/key.pem
+    [node1]
+    connect_to = node1.publicnetwork.com
+    [ondemand]
+    connect_to = dc3-198-51-100-3.cloudprovider.com
+    key = /home/user/key.pem
 
 Running a command on all the nodes:
 
     $ ./tinc-tailor run uname -r
-    tailor.host.node1.publicnetwork.com: 2.6.32-279.5.2.el6.x86_64
-    tailor.host.ondemand.cloudprovider.com: 2.6.32-5-amd64
+    tailor.host.node1: 2.6.32-279.5.2.el6.x86_64
+    tailor.host.ondemand: 2.6.32-5-amd64

@@ -51,7 +51,9 @@ class Host(object):
         key_filename=None
         if properties.has_key('key'):
             key_filename=properties['key']
-        self.client.connect(hostname, username='root', key_filename=key_filename)
+        if not properties.has_key('connect_to'):
+            properties['connect_to']=hostname
+        self.client.connect(properties['connect_to'], username='root', key_filename=key_filename)
         self.sftp = self.client.open_sftp()
         self.properties = self.get_properties(distro_properties)
         self.properties.update(properties)
