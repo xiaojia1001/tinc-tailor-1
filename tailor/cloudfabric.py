@@ -68,6 +68,7 @@ class Cloudfabric(Tailor):
     
     def refresh(self):
         actions = [
+            PutFile(self.get_file('cloudfabric.conf'), '/etc/cloudfabric.conf', True),
             Command("/etc/init.d/cloudfabric restart"),
         ]
         [self.hosts.run_action(action) for action in actions]
