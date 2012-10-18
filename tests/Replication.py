@@ -3,6 +3,7 @@ Tests related to replication.
 """
 
 from tailor.test import GenieTest
+from time import sleep
 
 class TableReplication(GenieTest):
     """Test creating a table gets replicated"""
@@ -16,6 +17,7 @@ class TableReplication(GenieTest):
 
     def runTest(self):
         self.assertSqlSuccess("CREATE TABLE t1 (c1 INT) ENGINE=GenieDB;", hosts=self.master, database='test')
+        sleep(1)
         self.assertSqlSame("SHOW CREATE TABLE t1;", database='test')
 
     def tearDown(self):
@@ -34,6 +36,7 @@ class DatabaseReplication(GenieTest):
 
     def runTest(self):
         self.assertSqlSuccess("CREATE DATABASE test_db; USE test_db; CREATE TABLE t1 (c1 INT) ENGINE=GenieDB;", hosts=self.master)
+        sleep(1)
         self.assertSqlSame("SHOW CREATE TABLE t1;", database='test_db')
 
     def tearDown(self):
@@ -53,7 +56,9 @@ class InsertReplication(GenieTest):
     def runTest(self):
         self.assertSqlSuccess("CREATE TABLE t1 (c1 INT) ENGINE=GenieDB;", hosts=self.master, database='test')
         self.assertSqlSuccess("INSERT INTO t1 VALUES (4), (2);", self.master, database='test')
+        sleep(1)
         self.assertSqlSuccess("INSERT INTO t1 VALUES (3), (1);", self.slave, database='test')
+        sleep(1)
         self.assertSqlEqual("SELECT * FROM t1 ORDER BY c1 DESC;", "c1\n4\n3\n2\n1\n", database='test')
 
     def tearDown(self):
@@ -73,6 +78,7 @@ class UniqueSecondaryReplication(GenieTest):
     def runTest(self):
         self.assertSqlSuccess("CREATE TABLE t1 (c1 INT PRIMARY KEY, c2 INT, UNIQUE INDEX idx(c2)) ENGINE=GenieDB;", hosts=self.master, database='test')
         self.assertSqlSuccess("INSERT INTO t1 VALUES (1,3);", self.master, database='test')
+        sleep(1)
         self.assertSqlFailure("INSERT INTO t1 VALUES (2,3);", self.slave, database='test')
 
     def tearDown(self):
@@ -92,9 +98,12 @@ class UpdateReplication(GenieTest):
     def runTest(self):
         self.assertSqlSuccess("CREATE TABLE t1 (c1 INT) ENGINE=GenieDB;", hosts=self.master, database='test')
         self.assertSqlSuccess("INSERT INTO t1 VALUES (4), (2);", self.master, database='test')
+        sleep(1)
         self.assertSqlSuccess("INSERT INTO t1 VALUES (3), (1);", self.slave, database='test')
+        sleep(1)
         self.assertSqlSuccess("UPDATE t1 SET c1=5 WHERE c1=3;", self.master, database='test')
         self.assertSqlSuccess("UPDATE t1 SET c1=6 WHERE c1=4;", self.slave, database='test')
+        sleep(1)
         self.assertSqlEqual("SELECT * FROM t1 ORDER BY c1 DESC;", "c1\n6\n5\n2\n1\n", database='test')
 
     def tearDown(self):
@@ -114,9 +123,12 @@ class DeleteReplication(GenieTest):
     def runTest(self):
         self.assertSqlSuccess("CREATE TABLE t1 (c1 INT) ENGINE=GenieDB;", hosts=self.master, database='test')
         self.assertSqlSuccess("INSERT INTO t1 VALUES (4), (2);", self.master, database='test')
+        sleep(1)
         self.assertSqlSuccess("INSERT INTO t1 VALUES (3), (1);", self.slave, database='test')
+        sleep(1)
         self.assertSqlSuccess("DELETE FROM t1 WHERE c1=3;", self.master, database='test')
         self.assertSqlSuccess("DELETE FROM t1 WHERE c1=4;", self.slave, database='test')
+        sleep(1)
         self.assertSqlEqual("SELECT * FROM t1 ORDER BY c1 DESC;", "c1\n2\n1\n", database='test')
 
     def tearDown(self):
@@ -136,7 +148,9 @@ class ConflictResolution(GenieTest):
 
     def runTest(self):
         self.assertSqlSuccess("CREATE TABLE t1 (c1 INT PRIMARY KEY, c2 INT) ENGINE=GenieDB;", hosts=self.master, database='test')
+        sleep(1)
         self.assertSqlSuccess("INSERT INTO t1 VALUES (1, RAND()*100000);", database='test')
+        sleep(1)
         self.assertSqlSame("SELECT * FROM t1 ORDER BY c1 DESC;", database='test')
         self.assertSqlEqual("SELECT count(*) AS count FROM t1;", "count\n1\n", database='test')
 

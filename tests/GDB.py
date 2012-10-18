@@ -4,6 +4,7 @@ Tests for issues in JIRA.
 
 from tailor.test import GenieTest
 from os import path
+from time import sleep
 
 class GDB379(GenieTest):
     """Test we can load wordpress data on one node, then run a query on the other"""
@@ -20,6 +21,7 @@ class GDB379(GenieTest):
     
     def runTest(self):
         self.assertSqlSuccess(self.sqlLoad, hosts=self.master, force=True)
+        sleep(10)
         self.assertSqlSuccess("SELECT SQL_CALC_FOUND_ROWS wp_posts.ID FROM wp_posts WHERE 1=1 AND wp_posts.post_type = 'post' AND (wp_posts.post_status = 'publish') ORDER BY wp_posts.post_date DESC LIMIT 0, 10;", hosts=self.slave, database='wp_test')
 
 class GDB402(GenieTest):
@@ -38,5 +40,7 @@ class GDB402(GenieTest):
     def runTest(self):
         self.assertSqlSuccess("DROP DATABASE geniedb_cl;", hosts=self.master, force=True)
         self.assertSqlSuccess("CREATE DATABASE geniedb_cl;", hosts=self.master)
+        sleep(1)
         self.assertSqlSuccess(self.sqlLoad, hosts=self.slave)
+        sleep(10)
         self.assertScriptSame('for i in `mysql -Ns -pgeniedb2012 -e "show tables in geniedb_cl;"`; do   echo $i `mysql -Ns -pgeniedb2012 -e "select count(*) from geniedb_cl.$i;"`; done')
