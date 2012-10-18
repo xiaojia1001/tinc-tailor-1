@@ -3,7 +3,7 @@ Created on 26 Sep 2012
 
 @author: david
 '''
-from tailor import Tailor, Action, AddRepos, UpdateRepos, Install, Try, Command, Uninstall, Rm, PutFile
+from tailor import Tailor, Action, AddRepos, UpdateRepos, Upgrade, Install, Try, Command, Uninstall, Rm, PutFile
 from logging import DEBUG
 
 class RHChannel(Action):
@@ -94,6 +94,8 @@ class Cloudfabric(Tailor):
     def run(self):
         if self.params.cloudfabric == 'install':
             self.install(self.params.install_hosts)
+        elif self.params.cloudfabric == 'upgrade':
+            self.upgrade(self.params.upgrade_hosts)
         elif self.params.cloudfabric == 'remove':
             self.remove(self.params.remove_hosts)
         else:
