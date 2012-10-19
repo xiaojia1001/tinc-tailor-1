@@ -80,9 +80,47 @@ addition to the usual `python` assertions such as `assertEqual` and
 `GenieTest` also provides several functions that are *not* assertions, but
 are vital in constucting powerful tests:
 
-* **runSql**
-* **runScript**
-* **partition**
-* **unpartition**
-* **setHostDelay**
-* **clearHostDelay**
+* **runSql(*query*, *host*=None, *database*="", *force*=False)**
+
+  This function runs the SQL statements *query* on the given *host*. If *host*
+  is not given, it defaults to the first host. If *force*=True, execution does
+  not stop if a statment has an error.
+
+  This function returns a tuple of the sql result and a return code (0 for
+  success).
+
+* **runScript(*script*, *host*=None)**
+
+  This function runs the shell script *script* on the given *host*. If *host*
+  is not given, it defaults to the first host.
+
+  This function returns a tuple of the script output and return code.
+
+* **partition(*partitioned_hosts*)**
+
+  This function introduces a network split between the hosts in
+  *partitioned_hosts* and those not in it (the split is symetric). A single
+  Host or a list of Hosts may be given.
+
+  Only one partition at a time is allowed.
+
+* **unpartition()**
+
+  This function restores any previously introduced partition. This function
+  is automatically called on tearDown().
+
+* **setHostDelay(*hosts*=None, *delay*=100)**
+
+  This function makes all network data sent from *hosts* (which may be None,
+  for all hosts, a particular Host or a list of hosts) delayed by *delay*
+  milliseconds before going over the network.
+
+  The same host may have setHostDelay called several times, and the last value
+  will be used.
+
+* **clearHostDelay(*hosts*=None)**
+
+  This function removes any network delay introduced by setHostDelay. *hosts*
+  may be None, in which case all hosts have their delay cleared, or a Host
+  object or a list of Host objects. This function is automatically called on
+  tearDown().
