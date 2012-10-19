@@ -5,6 +5,10 @@ Tests for issues in JIRA.
 from tailor.test import GenieTest
 from os import path
 from time import sleep
+try:
+    from unittest.case import expectedFailure
+except:
+    from unittest2.case import expectedFailure
 
 class GDB379(GenieTest):
     """Test we can load wordpress data on one node, then run a query on the other"""
@@ -37,6 +41,7 @@ class GDB402(GenieTest):
         self.master = self.hosts.hosts[0]
         self.slave = self.hosts.hosts[1]
 
+    @expectedFailure
     def runTest(self):
         self.assertSqlSuccess("DROP DATABASE geniedb_cl;", hosts=self.master, force=True)
         self.assertSqlSuccess("CREATE DATABASE geniedb_cl;", hosts=self.master)
