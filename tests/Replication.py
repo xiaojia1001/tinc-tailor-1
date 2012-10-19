@@ -138,7 +138,6 @@ class DeleteReplication(GenieTest):
 class ConflictResolution(GenieTest):
     """Test two version of the same record are reconciled."""
     def setUp(self):
-        self.skipTest("Broken test.")
         if len(self.hosts.hosts) < 2:
             self.skipTest("Insufficient Hosts")
         super(ConflictResolution, self).setUp()
@@ -149,8 +148,10 @@ class ConflictResolution(GenieTest):
     def runTest(self):
         self.assertSqlSuccess("CREATE TABLE t1 (c1 INT PRIMARY KEY, c2 INT) ENGINE=GenieDB;", hosts=self.master, database='test')
         sleep(1)
+        self.setHostDelay(delay=500)
         self.assertSqlSuccess("INSERT INTO t1 VALUES (1, RAND()*100000);", database='test')
         sleep(1)
+        self.clearHostDelay()
         self.assertSqlSame("SELECT * FROM t1 ORDER BY c1 DESC;", database='test')
         self.assertSqlEqual("SELECT count(*) AS count FROM t1;", "count\n1\n", database='test')
 

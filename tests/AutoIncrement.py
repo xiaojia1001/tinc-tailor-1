@@ -18,8 +18,10 @@ class SimultaniousInsert(GenieTest):
     def runTest(self):
         self.assertSqlSuccess("CREATE TABLE t1 (c1 INT AUTO_INCREMENT PRIMARY KEY, c2 INT) ENGINE=GenieDB;", hosts=self.master, database='test')
         sleep(1)
+        self.setHostDelay(delay=500)
         self.assertSqlSuccess("INSERT INTO t1 (c2) VALUES (1);", database='test')
         sleep(1)
+        self.clearHostDelay()
         self.assertSqlSame("SELECT * FROM t1 ORDER BY c1 DESC;", database='test')
         self.assertSqlEqual("SELECT count(*) AS count FROM t1;", "count\n2\n", database='test')
 
