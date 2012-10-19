@@ -4,7 +4,7 @@ Created on 2 Oct 2012
 @author: david
 '''
 
-from sys import path
+from sys import path, exc_info
 from time import time
 from itertools import chain
 from traceback import print_exception
@@ -335,7 +335,7 @@ class GenieTest(Test):
                 self.logger.debug("Deleting firewall rule from '%s': %s", host.hostname, fwrule)
                 host.sync_command("iptables -D INPUT "+fwrule)
             except:
-                pass
+                print_exception(*exc_info())
         self._partition = None
 
     def setUp(self):
