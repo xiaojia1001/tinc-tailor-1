@@ -57,7 +57,7 @@ class Tinc(Tailor):
         actions = [
             PutFile(self.get_file('tinc.conf'), '/etc/tinc/{netname}/tinc.conf', True),
             PutDir('hosts/', '/etc/tinc/{netname}/hosts/'),
-            Command('pkill -SIGHUP -f "^tincd -n {netname}" || tincd -n {netname}'),
+            Command('pkill -SIGHUP -f "^((/usr)?/s?bin/)?tincd -n {netname}" || tincd -n {netname}'),
             Try(Command('ip addr flush {netname} '), INFO),
             Command('ip addr add {private_ipv4_cidr} dev {netname}'),
             Command('ip link set {netname} up')
