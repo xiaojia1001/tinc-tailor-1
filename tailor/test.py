@@ -198,11 +198,6 @@ class Test(TestCase):
     def __exit__(self, exc_type, exc_value, traceback):
         self.tearDown()
 
-    def startRunSql(self):
-        pass
-    def endRunSql(self):
-        pass
-
     def runSql(self, *args, **kwargs):
         return RunSql(*args, **kwargs).get()
 
