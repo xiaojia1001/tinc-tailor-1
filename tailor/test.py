@@ -227,11 +227,11 @@ class Test(TestCase):
             self.assertNotEqual(0, status, "Query Succeeded for some reason.\nHost: {0}\nQuery: {1}\nResult: {2}".format(host.hostname, query, result))
         return result
 
-    def runScript(self, script, host=None):
+    def runScript(self, script, host=None, root=True):
         if host is None:
             host = self.hosts.hosts[0]
         host.logger.debug('Running script:\n'+script)
-        chan = host.async_command('sh')
+        chan = host.async_command('sh', root=root)
         chan.sendall(script)
         chan.shutdown_write()
         result = "".join(chan.makefile())
@@ -316,11 +316,11 @@ class GenieTest(Test):
             for other in others:
                 fwrule = "-p udp -m udp -s {source} --dport 5502 -j REJECT".format(source=other.properties['connect_to'])
                 self.logger.debug("Adding firewall rule to '%s': %s", host.hostname, fwrule)
-                host.sync_command("iptables -I INPUT "+fwrule)
+                host.sync_command("iptables -I INPUT "+fwrule, root=True)
                 self._partition.append((host, fwrule))
                 fwrule = "-p udp -m udp -s {source} --dport 5502 -j REJECT".format(source=other.properties['private_ipv4_address'])
                 self.logger.debug("Adding firewall rule to '%s': %s", host.hostname, fwrule)
-                host.sync_command("iptables -I INPUT "+fwrule)
+                host.sync_command("iptables -I INPUT "+fwrule, root=True)
                 self._partition.append((host, fwrule))
 
     def unpartition(self):
@@ -329,7 +329,7 @@ class GenieTest(Test):
         for host, fwrule in reversed(self._partition):
             try:
                 self.logger.debug("Deleting firewall rule from '%s': %s", host.hostname, fwrule)
-                host.sync_command("iptables -D INPUT "+fwrule)
+                host.sync_command("iptables -D INPUT "+fwrule, root=True)
             except:
                 print_exception(*exc_info())
         self._partition = None
@@ -342,10 +342,10 @@ class GenieTest(Test):
         for host in hosts:
             if host in self._shaping():
                 self.logger.debug("removing delay from '%s'", host.hostname)
-                host.sync_command(host.interpolate("tc qdisc del dev {netname} root"))
+                host.sync_command(host.interpolate("tc qdisc del dev {netname} root"), root=True)
                 self._shaping.discard(host)
             self.logger.debug("Adding %d ms delay to '%s'", delay, host.hostname)
-            host.sync_command(host.interpolate("tc qdisc add dev {netname} root netem delay %dms" % delay))
+            host.sync_command(host.interpolate("tc qdisc add dev {netname} root netem delay %dms" % delay), root=True)
             self._shaping.add(host)
 
     def clearHostDelay(self, hosts=None):
@@ -356,7 +356,7 @@ class GenieTest(Test):
         for host in hosts:
             try:
                 self.logger.debug("removing delay from '%s'", host.hostname)
-                host.sync_command(host.interpolate("tc qdisc del dev {netname} root"))
+                host.sync_command(host.interpolate("tc qdisc del dev {netname} root"), root=True)
                 self._shaping.discard(host)
             except:
                 print_exception(*exc_info())
@@ -368,16 +368,16 @@ class GenieTest(Test):
         /etc/init.d/cloudfabric stop
         rm -rf /var/log/{cloudfabric-core,DatabaseAdapter}.{log,trace} /var/lib/cloudfabric/* /dev/shm/CloudFabric /var/run/cloudfabric.stats
         truncate --size=0 /var/log/geniedb_se.log
-        """)
+        """, root=True)
         self.assertScriptSuccess("""
         /etc/init.d/cloudfabric start
         /etc/init.d/mysql* start
-        """)
+        """, root=True)
 
     def tearDown(self):
         self.clearHostDelay()
         self.unpartition()
         self.assertScriptSuccess("""
         java -cp /usr/share/java/DatabaseAdapter.jar com.sleepycat.je.util.DbDump -h /var/lib/cloudfabric -l | grep '[^$].\$$' | cut -d . -f 1 | xargs -I{} echo rm -rf /var/lib/mysql/{}
-        """)
+        """, root=True)
         super(GenieTest,self).tearDown()

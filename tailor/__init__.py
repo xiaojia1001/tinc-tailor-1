@@ -53,19 +53,23 @@ class Host(object):
             key_filename=properties['key']
         if not properties.has_key('connect_to'):
             properties['connect_to']=self.hostname
-        self.client.connect(properties['connect_to'], username='root', key_filename=key_filename)
+        if not properties.has_key('username'):
+            properties['username']='root'
+        self.client.connect(properties['connect_to'], username=properties['username'], key_filename=key_filename)
         self.sftp = self.client.open_sftp()
         self.properties = self.get_properties(distro_properties)
         self.properties.update(properties)
-        
-    def async_command(self, command):
+
+    def async_command(self, command, root=False):
         chan = self.client.get_transport().open_session()
         chan.setblocking(True)
         chan.set_combine_stderr(True)
         chan.exec_command(command)
         return chan
     
-    def sync_command(self, command, stdin=None):
+    def sync_command(self, command, stdin=None, root=False):
+        if root and self.properties['username'] != 'root':
+            command = 'sudo ' + command
         chan = self.async_command(command)
         if stdin is not None:
             chan.sendall(stdin)
@@ -209,14 +213,15 @@ class Try(Action):
             self.action.logger.log(self.log_level,'Try Action failed', exc_info=True)
     
 class Command(Action):
-    def __init__(self, command):
+    def __init__(self, command, root=False):
         super(Command, self).__init__()
         self.command = command
+        self.root = root
         
     def run(self, host):
         command = host.interpolate(self.command)
         self.logger.info("Running command '%s' on host '%s'", command, host.hostname)
-        host.sync_command(command)
+        host.sync_command(command, root=self.root)
     
 class AddRepos(Action):
     def __init__(self, repos):
@@ -227,11 +232,11 @@ class AddRepos(Action):
         repo = host.interpolate(repo) 
         filename = sub('(^deb |http://|ftp://|https://|[^.\w])','',repo)
         self.logger.info("Setting up repository '%s' on host '%s'", repo, host.hostname)
-        host.sync_command('echo "' + repo + '" > /etc/apt/sources.list.d/'+filename+'.list')
+        host.sync_command('echo "' + repo + '" > /etc/apt/sources.list.d/'+filename+'.list', root=True)
 
     def redhatrepo(self, host, repo):
         self.logger.info("Setting up repository '%s' on host '%s'", repo, host.hostname)
-        host.sync_command(host.interpolate('{addrepo_command} ' + repo))
+        host.sync_command(host.interpolate('{addrepo_command} ' + repo), root=True)
         
     def run(self, host):
         try:
@@ -255,25 +260,25 @@ class RemoveRepos(AddRepos):
         repo = host.interpolate(repo)
         filename = sub('(^deb |http://|ftp://|https://|[^.\w])','',repo)
         self.logger.info("Removing repository '%s' on host '%s'", repo, host.hostname)
-        host.sync_command('rm /etc/apt/sources.list.d/'+filename+'.list')
+        host.sync_command('rm /etc/apt/sources.list.d/'+filename+'.list', root=True)
 
     def redhatrepo(self, host, repo):
         self.logger.info("Removing repository '%s' on host '%s'", repo, host.hostname)
         packagename = re.sub(r'^.*/([^/]*?)(\.rpm)?$',r'\1', host.interpolate(repo))
-        host.sync_command(host.interpolate('{removerepo_command} ' + packagename))
+        host.sync_command(host.interpolate('{removerepo_command} ' + packagename), root=True)
 
 
 class UpdateRepos(Command):
     def __init__(self):
-        super(UpdateRepos, self).__init__('{update_command}')
+        super(UpdateRepos, self).__init__('{update_command}', root=True)
 
 class Install(Command):
     def __init__(self, package):
-        super(Install, self).__init__('{install_command} '+package)
+        super(Install, self).__init__('{install_command} '+package, root=True)
 
 class Upgrade(Command):
     def __init__(self, package):
-        super(Upgrade, self).__init__('{upgrade_command} '+package)
+        super(Upgrade, self).__init__('{upgrade_command} '+package, root=True)
     
 class Ping(Command):
     def __init__(self, host):
@@ -281,7 +286,7 @@ class Ping(Command):
     
 class Uninstall(Command):
     def __init__(self, package):
-        super(Uninstall, self).__init__('{remove_command} '+package)
+        super(Uninstall, self).__init__('{remove_command} '+package, root=True)
         
 class GetFile(Action):
     def __init__(self, remotename, localname):

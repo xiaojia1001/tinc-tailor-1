@@ -21,7 +21,7 @@ class Tinc(Tailor):
             PutFile(self.get_file('nets.boot'), '/etc/tinc/nets.boot', True),
             PutFile(self.get_file('tinc.conf'), '/etc/tinc/{netname}/tinc.conf', True),
             PutFile(self.get_file('host.conf'), '/etc/tinc/{netname}/hosts/{hostname}', True),
-            Command("tincd -n {netname} -K4096"),
+            Command("tincd -n {netname} -K4096", root=True),
             GetFile('/etc/tinc/cf/hosts/{hostname}', 'hosts/{hostname}')
         ]
         if len(hostnames) is 0:
@@ -35,7 +35,7 @@ class Tinc(Tailor):
             Uninstall('{tinc_package}'),
             Try(Rmdir('/etc/tinc/{netname}')),
             Try(Rm('/etc/tinc/nets.boot')),
-            Command("! pgrep -f '^tincd -n {netname}' || pkill -9 -f '^tincd -n {netname}'"),
+            Command("! pgrep -f '^tincd -n {netname}' || pkill -9 -f '^tincd -n {netname}'", root=True),
         ]
         if len(hostnames) is 0:
             hosts = self.hosts
@@ -57,10 +57,10 @@ class Tinc(Tailor):
         actions = [
             PutFile(self.get_file('tinc.conf'), '/etc/tinc/{netname}/tinc.conf', True),
             PutDir('hosts/', '/etc/tinc/{netname}/hosts/'),
-            Command('pkill -SIGHUP -f "^((/usr)?/s?bin/)?tincd -n {netname}" || tincd -n {netname}'),
-            Try(Command('ip addr flush {netname} '), INFO),
-            Command('ip addr add {private_ipv4_cidr} dev {netname}'),
-            Command('ip link set {netname} up')
+            Command('pkill -SIGHUP -f "^((/usr)?/s?bin/)?tincd -n {netname}" || tincd -n {netname}', root=True),
+            Try(Command('ip addr flush {netname} ', root=True), INFO),
+            Command('ip addr add {private_ipv4_cidr} dev {netname}', root=True),
+            Command('ip link set {netname} up', root=True)
         ]
         [self.hosts.run_action(action) for action in actions]
     

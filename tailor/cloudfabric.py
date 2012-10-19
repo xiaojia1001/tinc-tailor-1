@@ -11,9 +11,9 @@ class RHChannel(Action):
         if host.properties['distribution'] not in ('redhat, centos'):
             return
         if host.properties['channel'] == 'unstable':
-            host.sync_command("sed -e '/unstable/,$ s/enabled=0/enabled=1/' -i /etc/yum.repos.d/GenieDB.repo")
+            host.sync_command("sed -e '/unstable/,$ s/enabled=0/enabled=1/' -i /etc/yum.repos.d/GenieDB.repo", root=True)
         else:
-            host.sync_command("sed -e '/unstable/,$ s/enabled=1/enabled=0/' -i /etc/yum.repos.d/GenieDB.repo")
+            host.sync_command("sed -e '/unstable/,$ s/enabled=1/enabled=0/' -i /etc/yum.repos.d/GenieDB.repo", root=True)
 
 class Cloudfabric(Tailor):
     def install(self, hostnames=[]):
@@ -27,11 +27,11 @@ class Cloudfabric(Tailor):
             Try(RHChannel()),
             Try(UpdateRepos()),
             Try(Install('{cloudfabric_packages}')),
-            Try(Command("{service_command} cloudfabric stop"), DEBUG),
+            Try(Command("{service_command} cloudfabric stop", root=True), DEBUG),
             PutFile(self.get_file('cloudfabric.conf'), '/etc/cloudfabric.conf', True),
-            Command("{service_command} {mysql_service} start"),
-            Try(Command("{install_plugin}")),
-            Command("{service_command} cloudfabric start"),
+            Command("{service_command} {mysql_service} start", root=True),
+            Try(Command("{install_plugin}", root=True)),
+            Command("{service_command} cloudfabric start", root=True),
         ]
         if len(hostnames) is 0:
             hosts = self.hosts
@@ -52,7 +52,7 @@ class Cloudfabric(Tailor):
 
     def remove(self, hostnames=[]):
         actions = [
-            Command("{service_command} stop"),
+            Command("{service_command} stop", root=True),
             Uninstall('{cloudfabric_packages}'),
             Try(Rm('/etc/cloudfabric.conf')),
         ]
@@ -69,7 +69,7 @@ class Cloudfabric(Tailor):
     def refresh(self):
         actions = [
             PutFile(self.get_file('cloudfabric.conf'), '/etc/cloudfabric.conf', True),
-            Command("/etc/init.d/cloudfabric restart"),
+            Command("/etc/init.d/cloudfabric restart", root=True),
         ]
         [self.hosts.run_action(action) for action in actions]
     
