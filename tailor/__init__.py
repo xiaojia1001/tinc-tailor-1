@@ -2,7 +2,7 @@
 
 from os import walk, path, remove
 from paramiko import SSHClient, AutoAddPolicy
-from logging import getLogger, WARNING
+from logging import getLogger, WARNING, DEBUG
 from stat import S_ISDIR, S_ISREG, S_ISLNK
 from re import sub
 from subprocess import Popen, PIPE
@@ -380,7 +380,7 @@ class PutDir(ActionList):
         self.logger.debug("listing %s", self.localname)
         for (dirpath, _, filenames) in walk(self.localname):
             remotedir = path.join(self.remotename, path.relpath(dirpath, self.localname))
-            self.actions.append(Try(Mkdir(remotedir)))
+            self.actions.append(Try(Mkdir(remotedir), DEBUG))
             self.logger.debug("Mkdir %s", remotedir)
             for filename in filenames:
                 fromfile = path.join(dirpath, filename)
