@@ -6,8 +6,7 @@ from tailor.run import Run
 from tailor.cloudfabric import Cloudfabric
 from tailor.test import TestRunner
 from argparse import ArgumentParser, FileType
-from logging import getLogger, DEBUG, StreamHandler, Formatter, INFO,\
-    getLevelName, WARNING
+from logging import getLogger, StreamHandler, Formatter, INFO
 from copy import copy
 from ConfigParser import ConfigParser
 from tailor import can_color
@@ -36,7 +35,7 @@ class ColoredConsoleHandler(StreamHandler):
 if __name__ == '__main__':
     parser = ArgumentParser(description='''tinc-tailor is a tool for managing a cluster of CloudFabric servers using tinc as a VPN.''')
     parser.add_argument('-f','--hosts-file', type=FileType('r'), help='''Definition of the cluster.''')
-    parser.add_argument('-l','--log-level', default=WARNING, help='''This option determines the amount of information to be logged. The default is WARNING, which prints very little.''')
+    parser.add_argument('-l','--log-level', default=INFO, help='''This option determines the amount of information to be logged. The default is WARNING, which prints very little.''')
     parser.add_argument('--global-log-level', default=None, help='As --log-level, but also log higher detail from python libraries used, for example for debugging the SSH connection.''')
     subparsers = parser.add_subparsers(title='tool', dest='tool', description='''Sub-system to configure. You can run `tinc-tailor TOOL -h` to see help specific to that sub-system.''')
     Tinc.setup_argparse(subparsers.add_parser('tinc', help='Configure tinc VPN.'))
