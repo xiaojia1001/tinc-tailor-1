@@ -340,7 +340,7 @@ class GenieTest(Test):
         if isinstance(hosts, Host):
             hosts = [hosts]
         for host in hosts:
-            if host in self._shaping():
+            if host in self._shaping:
                 self.logger.debug("removing delay from '%s'", host.hostname)
                 host.sync_command(host.interpolate("tc qdisc del dev {netname} root"), root=True)
                 self._shaping.discard(host)
