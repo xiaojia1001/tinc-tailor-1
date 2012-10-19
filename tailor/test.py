@@ -301,6 +301,7 @@ class GenieTest(Test):
     def __init__(self, *args, **kwargs):
         super(GenieTest, self).__init__(*args, **kwargs)
         self._partition = None
+        self._shaping = set()
 
     def partition(self, partitioned_hosts):
         if self._partition is not None:
@@ -338,6 +339,29 @@ class GenieTest(Test):
                 print_exception(*exc_info())
         self._partition = None
 
+    def setHostDelay(self, hosts=None, delay=100):
+        if hosts is None:
+            hosts=self.hosts
+        if isinstance(hosts, Host):
+            hosts = [hosts]
+        for host in hosts:
+            self.logger.debug("Adding %d ms delay to '%s'", delay, host.hostname)
+            host.sync_command(host.interpolate("tc qdisc add dev {netname} root netem delay %dms" % delay))
+            self._shaping.add(host)
+
+    def clearHostDelay(self, hosts=None):
+        if hosts is None:
+            hosts=self._shaping.copy()
+        if isinstance(hosts, Host):
+            hosts = [hosts]
+        for host in hosts:
+            try:
+                self.logger.debug("removing delay from '%s'", host.hostname)
+                host.sync_command(host.interpolate("tc qdisc del dev {netname} root"))
+                self._shaping.discard(host)
+            except:
+                print_exception(*exc_info())
+
     def setUp(self):
         super(GenieTest,self).setUp()
         self.assertScriptSuccess("""
@@ -352,6 +376,7 @@ class GenieTest(Test):
         """)
 
     def tearDown(self):
+        self.clearHostDelay()
         self.unpartition()
         self.assertScriptSuccess("""
         java -cp /usr/share/java/DatabaseAdapter.jar com.sleepycat.je.util.DbDump -h /var/lib/cloudfabric -l | grep '[^$].\$$' | cut -d . -f 1 | xargs -I{} echo rm -rf /var/lib/mysql/{}
