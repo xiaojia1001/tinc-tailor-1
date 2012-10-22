@@ -1,0 +1,27 @@
+[DEFAULT]
+; Options placed into this section are applied to all hosts.
+
+; This option specifies the interface cloudfabric should use, and the 'network-
+; name' for tinc. If you are using tinc, 'cf' is fine. If you are not using
+; tinc this should be the interface for cloudfabric to operate on.
+;netname = cf
+
+; Each server in the cluster gets a section. The name must not have a hyphen or
+; space in. It may be a domain name.
+;[node1]
+
+; If the node name is not a domain name, specifiy a IP address or domain name
+; that can be used to connect to the host.
+;connect_to = 203.0.113.3
+
+; If you do not want to connect as root, specify a username. This requires
+; 'sudo' to be installed on the server, and the 'requiretty' sudo option to
+; be off.
+;username = sfalken
+
+; If you want to log in using password, and/or are non-root and sudo requires a
+; password, set it here.
+;password = Joshua
+
+; If mysql requires a password, set it here.
+;mysql_password = Joshua
