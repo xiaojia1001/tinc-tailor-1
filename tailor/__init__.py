@@ -57,6 +57,7 @@ class Host(object):
             properties['username']='root'
         self.client.connect(properties['connect_to'], username=properties['username'], key_filename=key_filename)
         self._sftp = None
+        self.properties = properties
         self.properties = self.get_properties(distro_properties)
         self.properties.update(properties)
 
@@ -74,17 +75,20 @@ class Host(object):
                 self.logger.debug("Connecting SFTP Client.")
                 self._sftp = SFTPClient(t)
         return self._sftp
+
     def async_command(self, command, root=False):
         chan = self.client.get_transport().open_session()
+        if self.properties['username'] != 'root':
+            chan.get_pty() # sudo may require a pty
+            if root:
+                command = 'sudo ' + command
         chan.setblocking(True)
         chan.set_combine_stderr(True)
         chan.exec_command(command)
         return chan
     
     def sync_command(self, command, stdin=None, root=False):
-        if root and self.properties['username'] != 'root':
-            command = 'sudo ' + command
-        chan = self.async_command(command)
+        chan = self.async_command(command, root)
         if stdin is not None:
             chan.sendall(stdin)
         chan.shutdown_write()
@@ -107,7 +111,8 @@ class Host(object):
                'upgrade_command': 'apt-get -y --force-yes upgrade',
                'remove_command': 'apt-get -y --force-yes remove',
                'removerepo_command': '',
-               'service_command': 'invoke-rc.d'
+               'service_command': 'invoke-rc.d',
+               'sftp-server': '/usr/lib/sftp-server'
             },
             'redhat': {
                'addrepo_command': 'yum -y install',
@@ -116,7 +121,8 @@ class Host(object):
                'upgrade_command': 'yum -y upgrade',
                'remove_command': 'yum -y remove',
                'removerepo_command': 'yum -y remove',
-               'service_command': 'service'
+               'service_command': 'service',
+               'sftp-server': '/usr/libexec/openssh/sftp-server'
             },
             'centos': {
                'addrepo_command': 'yum -y install',
@@ -125,7 +131,8 @@ class Host(object):
                'upgrade_command': 'yum -y upgrade',
                'remove_command': 'yum -y remove',
                'removerepo_command': 'yum -y remove',
-               'service_command': 'service'
+               'service_command': 'service',
+               'sftp-server': '/usr/libexec/openssh/sftp-server'
             }
         }
         stdout = self.async_command('cat /etc/issue').makefile('r')
