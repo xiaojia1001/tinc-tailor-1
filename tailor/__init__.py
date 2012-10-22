@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from os import walk, path, remove
-from paramiko import SSHClient, AutoAddPolicy
+from paramiko import SSHClient, SFTPClient, AutoAddPolicy
 from logging import getLogger, WARNING, DEBUG
 from stat import S_ISDIR, S_ISREG, S_ISLNK
 from re import sub
@@ -56,10 +56,24 @@ class Host(object):
         if not properties.has_key('username'):
             properties['username']='root'
         self.client.connect(properties['connect_to'], username=properties['username'], key_filename=key_filename)
-        self.sftp = self.client.open_sftp()
+        self._sftp = None
         self.properties = self.get_properties(distro_properties)
         self.properties.update(properties)
 
+    @property
+    def sftp(self):
+        if self._sftp is None:
+            if self.properties['username'] == 'root':
+                self.logger.debug("Opening SFTP session")
+                self._sftp = self.client.open_sftp()
+            else:
+                self.logger.debug("Opening SSH session for sudo-wrapped SFTP")
+                t = self.client.get_transport().open_session()
+                self.logger.debug("Starting sudo-wrapped SFTP server.")
+                t.exec_command(self.interpolate('sudo {sftp-server}'))
+                self.logger.debug("Connecting SFTP Client.")
+                self._sftp = SFTPClient(t)
+        return self._sftp
     def async_command(self, command, root=False):
         chan = self.client.get_transport().open_session()
         chan.setblocking(True)
