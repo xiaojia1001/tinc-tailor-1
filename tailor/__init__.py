@@ -5,6 +5,7 @@ from paramiko import SSHClient, SFTPClient, AutoAddPolicy
 from logging import getLogger, WARNING, DEBUG
 from stat import S_ISDIR, S_ISREG, S_ISLNK
 from re import sub
+from time import sleep
 from subprocess import Popen, PIPE
 
 def can_color():
@@ -41,6 +42,8 @@ class CommandFailedException(TailorException):
 #
 
 class Host(object):
+    _prompt_sentinel = "XGENIETAILORX"
+
     def __init__(self, hostname, properties={}, distro_properties={}):
         self.logger = getLogger('tailor.host.' + hostname)
         self.logger.info("Adding host '%s'", hostname)
@@ -61,6 +64,24 @@ class Host(object):
         self.properties = self.get_properties(distro_properties)
         self.properties.update(properties)
 
+    def _root_command(self, command, chan=None):
+        if chan is None:
+            chan = self.client.get_transport().open_session()
+        if self.properties.has_key('password'):
+            command = 'sudo -Sp%s %s' % (self._prompt_sentinel,command)
+            chan.exec_command(command)
+            sleep(0.1)
+            if chan.recv_stderr_ready():
+                prompt = chan.recv_stderr(len(self._prompt_sentinel))
+                if prompt == self._prompt_sentinel:
+                    chan.sendall(self.properties['password']+'\n')
+                else:
+                    raise IOError("Got unexpected sudo prompt.")
+        else:
+            command = 'sudo %s' % command
+            chan.exec_command(command)
+        return chan
+
     @property
     def sftp(self):
         if self._sftp is None:
@@ -68,23 +89,19 @@ class Host(object):
                 self.logger.debug("Opening SFTP session")
                 self._sftp = self.client.open_sftp()
             else:
-                self.logger.debug("Opening SSH session for sudo-wrapped SFTP")
-                t = self.client.get_transport().open_session()
-                self.logger.debug("Starting sudo-wrapped SFTP server.")
-                t.exec_command(self.interpolate('sudo {sftp-server}'))
+                self.logger.debug("Opening sudo-wrapped SFTP")
+                chan = self._root_command(self.properties['sftp_server'])
                 self.logger.debug("Connecting SFTP Client.")
-                self._sftp = SFTPClient(t)
+                self._sftp = SFTPClient(chan)
         return self._sftp
 
     def async_command(self, command, root=False):
-        chan = self.client.get_transport().open_session()
-        if self.properties['username'] != 'root':
-            chan.get_pty() # sudo may require a pty
-            if root:
-                command = 'sudo ' + command
-        chan.setblocking(True)
+        if self.properties['username'] == 'root' or root is False:
+            chan = self.client.get_transport().open_session()
+            chan.exec_command(command)
+        else:
+            chan = self._root_command(command)
         chan.set_combine_stderr(True)
-        chan.exec_command(command)
         return chan
     
     def sync_command(self, command, stdin=None, root=False):
@@ -112,7 +129,7 @@ class Host(object):
                'remove_command': 'apt-get -y --force-yes remove',
                'removerepo_command': '',
                'service_command': 'invoke-rc.d',
-               'sftp-server': '/usr/lib/sftp-server'
+               'sftp_server': '/usr/lib/sftp-server'
             },
             'redhat': {
                'addrepo_command': 'yum -y install',
@@ -122,7 +139,7 @@ class Host(object):
                'remove_command': 'yum -y remove',
                'removerepo_command': 'yum -y remove',
                'service_command': 'service',
-               'sftp-server': '/usr/libexec/openssh/sftp-server'
+               'sftp_server': '/usr/libexec/openssh/sftp-server'
             },
             'centos': {
                'addrepo_command': 'yum -y install',
@@ -132,7 +149,7 @@ class Host(object):
                'remove_command': 'yum -y remove',
                'removerepo_command': 'yum -y remove',
                'service_command': 'service',
-               'sftp-server': '/usr/libexec/openssh/sftp-server'
+               'sftp_server': '/usr/libexec/openssh/sftp-server'
             }
         }
         stdout = self.async_command('cat /etc/issue').makefile('r')
