@@ -134,6 +134,16 @@ class Host(object):
                'service_command': 'invoke-rc.d',
                'sftp_server': '/usr/lib/sftp-server'
             },
+            'ubuntu': {
+               'addrepo_command': '',
+               'update_command': 'apt-get -y --force-yes update',
+               'install_command': 'apt-get -y --force-yes install',
+               'upgrade_command': 'apt-get -y --force-yes upgrade',
+               'remove_command': 'apt-get -y --force-yes remove',
+               'removerepo_command': '',
+               'service_command': 'invoke-rc.d',
+               'sftp_server': '/usr/lib/sftp-server'
+            },
             'redhat': {
                'addrepo_command': 'yum -y install',
                'update_command': 'yum clean expire-cache',
@@ -160,6 +170,8 @@ class Host(object):
         stdout.close()
         if first.find("Debian") is not -1:
             distro = 'debian'
+        if first.find("Ubuntu") is not -1:
+            distro = 'ubuntu'
         elif first.find("Redhat") is not -1 or first.find("Red Hat") is not -1:
             distro = 'redhat'
         elif first.find("CentOS") is not -1:
@@ -281,7 +293,7 @@ class AddRepos(Action):
         
     def run(self, host):
         try:
-            if host.properties['distribution'] == 'debian':
+            if host.properties['distribution'] == 'debian' or host.properties['distribution'] == 'ubuntu':
                 repofn = self.debianrepo
             if host.properties['distribution'] == 'centos' or host.properties['distribution'] == 'redhat':
                 repofn = self.redhatrepo   

@@ -20,6 +20,8 @@ class Cloudfabric(Tailor):
         actions = [
             Try(AddRepos({'debian':['deb http://packages.geniedb.com/debian {channel}/',
                                     'deb http://backports.debian.org/debian-backports squeeze-backports main'],
+                          'ubuntu':['deb http://packages.geniedb.com/debian {channel}/',
+                                    'deb http://backports.debian.org/debian-backports squeeze-backports main'],
                           'redhat':['http://mirror.bytemark.co.uk/fedora/epel/6/i386/epel-release-6-7.noarch.rpm',
                                     'http://packages.geniedb.com/centos/unstable/geniedb-release-1-2.noarch.rpm'],
                           'centos':['http://mirror.bytemark.co.uk/fedora/epel/6/i386/epel-release-6-7.noarch.rpm',
@@ -88,6 +90,7 @@ class Cloudfabric(Tailor):
     def argparse(self, params):
         self.properties['channel']= params.channel
         self.distro_properties['debian'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric exampleclient cloudfabric-mysql mysql-server-5.1'}
+        self.distro_properties['ubuntu'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric exampleclient cloudfabric-mysql mysql-server-5.1'}
         self.distro_properties['redhat'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'}
         self.distro_properties['centos'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-mysql mysql-server'}
         self.params = params
