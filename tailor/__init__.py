@@ -25,7 +25,7 @@ class UnknownOSException(TailorException):
     def __init__(self, os):
         self.os = os
     def __str__(self):
-        return "Unknown operating systgem {os}".format(os=self.os)
+        return "Unknown operating system {os}".format(os=self.os)
 
 class TooManyHostsException(TailorException):
     def __str__(self):
