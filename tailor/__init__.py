@@ -71,6 +71,10 @@ class Host(object):
         if chan is None:
             chan = self.client.get_transport().open_session()
         if self.properties.has_key('password'):
+            chan.get_pty()
+            sleep(1)
+            while chan.recv_ready():
+                print chan.recv(100)
             command = 'sudo -Sp%s %s' % (self._prompt_sentinel,command)
             chan.exec_command(command)
             sleep(0.1)
@@ -79,7 +83,7 @@ class Host(object):
                 if prompt == self._prompt_sentinel:
                     chan.sendall(self.properties['password']+'\n')
                 else:
-                    raise IOError("Got unexpected sudo prompt.")
+                    raise IOError("Got unexpected sudo prompt." + prompt)
         else:
             command = 'sudo %s' % command
             chan.exec_command(command)
@@ -170,7 +174,7 @@ class Host(object):
         stdout.close()
         if first.find("Debian") is not -1:
             distro = 'debian'
-        if first.find("Ubuntu") is not -1:
+        elif first.find("Ubuntu") is not -1:
             distro = 'ubuntu'
         elif first.find("Redhat") is not -1 or first.find("Red Hat") is not -1:
             distro = 'redhat'
