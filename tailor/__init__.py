@@ -129,22 +129,22 @@ class Host(object):
     def get_properties(self, distro_properties):
         local_dp = {
             'debian': {
-               'addrepo_command': '',
+               'addrepo_command': 'add-apt-repository',
                'update_command': 'apt-get -y --force-yes update',
                'install_command': 'apt-get -y --force-yes install',
                'upgrade_command': 'apt-get -y --force-yes upgrade',
                'remove_command': 'apt-get -y --force-yes remove',
-               'removerepo_command': '',
+               'removerepo_command': 'add-apt-repository -r',
                'service_command': 'invoke-rc.d',
                'sftp_server': '/usr/lib/sftp-server'
             },
             'ubuntu': {
-               'addrepo_command': '',
+               'addrepo_command': 'add-apt-repository',
                'update_command': 'apt-get -y --force-yes update',
                'install_command': 'apt-get -y --force-yes install',
                'upgrade_command': 'apt-get -y --force-yes upgrade',
                'remove_command': 'apt-get -y --force-yes remove',
-               'removerepo_command': '',
+               'removerepo_command': 'add-apt-repository -r',
                'service_command': 'invoke-rc.d',
                'sftp_server': '/usr/lib/sftp-server'
             },
@@ -285,43 +285,28 @@ class AddRepos(Action):
         self.repos = repos
         super(AddRepos, self).__init__()
 
-    def debianrepo(self, host, repo):
-        repo = host.interpolate(repo) 
-        filename = sub('(^deb |http://|ftp://|https://|[^.\w])','',repo)
-        self.logger.info("Setting up repository '%s' on host '%s'", repo, host.hostname)
-        host.sync_command('echo "' + repo + '" > /etc/apt/sources.list.d/'+filename+'.list', root=True)
-
-    def redhatrepo(self, host, repo):
+    def repofn(self, host, repo):
         self.logger.info("Setting up repository '%s' on host '%s'", repo, host.hostname)
         host.sync_command(host.interpolate('{addrepo_command} ' + repo), root=True)
         
     def run(self, host):
         try:
-            if host.properties['distribution'] == 'debian' or host.properties['distribution'] == 'ubuntu':
-                repofn = self.debianrepo
-            if host.properties['distribution'] == 'centos' or host.properties['distribution'] == 'redhat':
-                repofn = self.redhatrepo   
             if isinstance(self.repos[host.properties['distribution']], str):
-                repofn(host, self.repos[host.properties['distribution']])
+                self.repofn(host, self.repos[host.properties['distribution']])
             else:
                 for repo in self.repos[host.properties['distribution']]:
                     try:
-                        repofn(host, repo)
+                        self.repofn(host, repo)
                     except CommandFailedException:
                         pass
         except KeyError:
             pass
 
 class RemoveRepos(AddRepos):
-    def debianrepo(self, host, repo):
-        repo = host.interpolate(repo)
-        filename = sub('(^deb |http://|ftp://|https://|[^.\w])','',repo)
+    def repofn(self, host, repo):
         self.logger.info("Removing repository '%s' on host '%s'", repo, host.hostname)
-        host.sync_command('rm /etc/apt/sources.list.d/'+filename+'.list', root=True)
-
-    def redhatrepo(self, host, repo):
-        self.logger.info("Removing repository '%s' on host '%s'", repo, host.hostname)
-        packagename = re.sub(r'^.*/([^/]*?)(\.rpm)?$',r'\1', host.interpolate(repo))
+        if host.properties['distribution'] == 'redhat' or host.properties['distribution'] == 'centos':
+            packagename = re.sub(r'^.*/([^/]*?)(\.rpm)?$',r'\1', host.interpolate(repo))
         host.sync_command(host.interpolate('{removerepo_command} ' + packagename), root=True)
 
 
