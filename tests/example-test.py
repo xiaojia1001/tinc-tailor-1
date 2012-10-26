@@ -1,8 +1,11 @@
 """Long documentation for test suite!"""
 
 from tailor.test import Test
-import unittest
 import time
+try:
+    from unittest.case import expectedFailure, skip
+except:
+    from unittest2.case import expectedFailure, skip
 
 class ExTest(Test):
     """Long documentation for test!"""
@@ -11,7 +14,7 @@ class ExTest(Test):
         self.logger.info('3')
 
 class SkippedTest(Test):
-    @unittest.skip("unconditionally skipped")
+    @skip("unconditionally skipped")
     def setUp(self):
         pass
 
@@ -45,3 +48,13 @@ class ExampleException(Fixture):
 class ExampleFailure(Fixture):
     def runTest(self):
         self.assertTrue(False)
+
+class ExampleExpectedFailure(Test):
+    @expectedFailure
+    def runTest(self):
+        self.assertTrue(False)
+
+class ExampleFailExpectedFailure(Test):
+    @expectedFailure
+    def runTest(self):
+        self.assertTrue(True)
