@@ -72,8 +72,10 @@ class TailorTestResult(TestResult):
 
         if len(self.failures) + len(self.errors) + len(self.unexpectedSuccesses) > 0:
             self.logger.error("[  FAILED  ]"+NORMAL+" %s test, listed below:", len(self.failures) + len(self.errors) + len(self.unexpectedSuccesses))
-        for failure in chain(self.failures, self.errors, self.unexpectedSuccesses):
+        for failure in chain(self.failures, self.errors):
             self.logger.error("[  FAILED  ]"+NORMAL+" %s", failure[0].id())
+        for failure in self.unexpectedSuccesses:
+            self.logger.error("[  FAILED  ]"+NORMAL+" %s", failure.id())
 
     def startTest(self, test):
         super(TailorTestResult, self).startTest(self)
