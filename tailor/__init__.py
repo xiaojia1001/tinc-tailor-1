@@ -445,15 +445,20 @@ class Tailor(object):
             self.argparse(params)
         self.hosts = Hostlist(hosts=params.hosts, properties=self.properties, distro_properties=self.distro_properties)
     
+    # Overload this with a static method to fill an argparser.
     @staticmethod
     def setup_argparse(parser):
         pass
     
+    # Overload this with code to process arguments.  self.properties will be
+    # set to cluser-overall defaults. self.properties will be used to create
+    # per-host properties, overriding what is set here.
     def argparse(self, params):
         self.params = params
     
     def get_file(self, filename):
         return path.join(self.root, filename)
     
+    # Overload this with code to run the action.
     def run(self):
         pass
