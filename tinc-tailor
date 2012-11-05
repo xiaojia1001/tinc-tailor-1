@@ -62,14 +62,15 @@ if __name__ == '__main__':
     config = ConfigParser()
     config.readfp(params.hosts_file)
     params.hosts = dict((hostname, dict(config.items(hostname))) for hostname in config.sections())
+    properties = dict(config.items('DEFAULT'))
     
     if params.tool == 'check':
-        Check(params).run()
+        Check(params, properties).run()
     elif params.tool == 'run':
-        Run(params).run()
+        Run(params, properties).run()
     elif params.tool == 'tinc':
-        Tinc(params).run()
+        Tinc(params, properties).run()
     elif params.tool == 'cloudfabric':
-        Cloudfabric(params).run()
+        Cloudfabric(params, properties).run()
     elif params.tool == 'test':
-        TestRunner(params).run()
+        TestRunner(params, properties).run()
