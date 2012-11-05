@@ -316,11 +316,7 @@ class GenieTest(Test):
             else:
                 others = partitioned_hosts
             for other in others:
-                fwrule = "-p udp -m udp -s {source} --dport 5502 -j REJECT".format(source=other.properties['connect_to'])
-                self.logger.debug("Adding firewall rule to '%s': %s", host.hostname, fwrule)
-                host.sync_command("iptables -I INPUT "+fwrule, root=True)
-                self._partition.append((host, fwrule))
-                fwrule = "-p udp -m udp -s {source} --dport 5502 -j REJECT".format(source=other.properties['private_ipv4_address'])
+                fwrule = "-p udp -m udp -s {source} --dport 5502 -j REJECT".format(source=other.properties['application_address'])
                 self.logger.debug("Adding firewall rule to '%s': %s", host.hostname, fwrule)
                 host.sync_command("iptables -I INPUT "+fwrule, root=True)
                 self._partition.append((host, fwrule))
@@ -344,10 +340,10 @@ class GenieTest(Test):
         for host in hosts:
             if host in self._shaping:
                 self.logger.debug("removing delay from '%s'", host.hostname)
-                host.sync_command(host.interpolate("tc qdisc del dev {netname} root"), root=True)
+                host.sync_command(host.interpolate("tc qdisc del dev {interface} root"), root=True)
                 self._shaping.discard(host)
             self.logger.debug("Adding %d ms delay to '%s'", delay, host.hostname)
-            host.sync_command(host.interpolate("tc qdisc add dev {netname} root netem delay %dms" % delay), root=True)
+            host.sync_command(host.interpolate("tc qdisc add dev {interface} root netem delay %dms" % delay), root=True)
             self._shaping.add(host)
 
     def clearHostDelay(self, hosts=None):
@@ -358,7 +354,7 @@ class GenieTest(Test):
         for host in hosts:
             try:
                 self.logger.debug("removing delay from '%s'", host.hostname)
-                host.sync_command(host.interpolate("tc qdisc del dev {netname} root"), root=True)
+                host.sync_command(host.interpolate("tc qdisc del dev {interface} root"), root=True)
                 self._shaping.discard(host)
             except:
                 print_exception(*exc_info())

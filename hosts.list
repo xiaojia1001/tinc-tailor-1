@@ -1,9 +1,15 @@
 [DEFAULT]
 ; Options placed into this section are applied to all hosts.
 
+; This option specifies whether or not a tinc VPN is being used. Setting this
+; to true causes applications to use private addresses and tinc interfaces. You
+; must install tinc with the tinc subcommand.
+;use_tinc = false
+
 ; This option specifies the interface cloudfabric should use, and the 'network-
 ; name' for tinc. If you are using tinc, 'cf' is fine. If you are not using
-; tinc this should be the interface for cloudfabric to operate on.
+; tinc this should be the interface for cloudfabric to operate on. This
+; defaults to 'cf' if use_tinc = true, and 'eth0' otherwise.
 ;netname = cf
 
 ; This option specifies the transport layer cloudfabric should use. 'tcp' only

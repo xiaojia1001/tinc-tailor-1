@@ -219,6 +219,10 @@ class Hostlist(object):
         host.properties['private_ipv4_address'] = '192.168.'+str(self.net)+'.'+ str(self.hostnum)
         host.properties['private_ipv4_cidr'] = '192.168.'+str(self.net)+'.'+ str(self.hostnum)+'/24'
         host.properties['private_ipv4_netmask'] = '255.255.255.0'
+        if host.properties.has_key('use_tinc') and host.properties['use_tinc'] in ('true', 'yes', 'True', 'TRUE','Yes','YES'):
+            host.properties['application_address'] = host.properties['private_ipv4_address']
+        else:
+            host.properties['application_address'] = host.properties['connect_to']
         self.hosts.append(host)
         self.hostnum += 1
         
@@ -440,6 +444,10 @@ class Tailor(object):
         self.logger = getLogger('tailor.' + self.__class__.__name__)
         self.root = path.abspath(path.dirname(__file__))
         self.properties = properties
+        if self.properties.has_key('use_tinc') and self.properties['use_tinc'] in ('true', 'yes', 'True', 'TRUE','Yes','YES'):
+            self.properties['interface'] = self.properties['netname']
+        else:
+            self.properties['interface'] = 'eth0'
         self.distro_properties = {}
         if params is not None:
             self.argparse(params)

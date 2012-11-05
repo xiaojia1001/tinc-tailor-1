@@ -95,7 +95,7 @@ class Cloudfabric(Tailor):
 dbreq-url=tcp://127.0.0.1:5504
 dbrep-url=tcp://127.0.0.1:5505"""
         if self.properties['transport'] in ('epgm','pgm'):
-            self.properties['urls'] += "\npub-url=" + self.properties['transport'] + "://" + self.properties['netname'] + ";224.0.0.1:5502"
+            self.properties['urls'] += "\npub-url=" + self.properties['transport'] + "://" + self.properties['interface'] + ";224.0.0.1:5502"
         self.distro_properties['debian'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric exampleclient cloudfabric-mysql libcloudfabric0 database-adapter mysql-server-5.1'}
         self.distro_properties['ubuntu'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric exampleclient cloudfabric-mysql libcloudfabric0 database-adapter  mysql-server-5.1'}
         self.distro_properties['redhat'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-lib cloudfabric-mysql mysql-server'}
@@ -106,10 +106,10 @@ dbrep-url=tcp://127.0.0.1:5505"""
         if self.properties['transport'] == 'tcp':
             if len(self.hosts) != 2:
                 raise Exception("Use tcp transport with exactly 2 hosts")
-            self.hosts.hosts[0].properties['urls'] += "\npub-url=tcp://" + self.hosts.hosts[0].properties['private_ipv4_address'] + ":5502"
-            self.hosts.hosts[1].properties['urls'] += "\npub-url=tcp://" + self.hosts.hosts[1].properties['private_ipv4_address'] + ":5502"
-            self.hosts.hosts[0].properties['urls'] += "\nsub-url=tcp://" + self.hosts.hosts[1].properties['private_ipv4_address'] + ":5502"
-            self.hosts.hosts[1].properties['urls'] += "\nsub-url=tcp://" + self.hosts.hosts[0].properties['private_ipv4_address'] + ":5502"
+            self.hosts.hosts[0].properties['urls'] += "\npub-url=tcp://" + self.hosts.hosts[0].properties['application_address'] + ":5502"
+            self.hosts.hosts[1].properties['urls'] += "\npub-url=tcp://" + self.hosts.hosts[1].properties['application_address'] + ":5502"
+            self.hosts.hosts[0].properties['urls'] += "\nsub-url=tcp://" + self.hosts.hosts[1].properties['application_address'] + ":5502"
+            self.hosts.hosts[1].properties['urls'] += "\nsub-url=tcp://" + self.hosts.hosts[0].properties['application_address'] + ":5502"
         elif self.properties['transport'] not in ('epgm','pgm'):
             raise KeyError("Unknown transport " + self.properties['transport'])
         if self.params.cloudfabric == 'install':
