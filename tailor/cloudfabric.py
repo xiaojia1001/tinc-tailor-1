@@ -78,7 +78,6 @@ class Cloudfabric(Tailor):
     @staticmethod
     def setup_argparse(parser):
         parser.add_argument('--channel','-c', choices=['stable','unstable'], default='unstable', help='Which channel of cloudfabric software to install.')
-        parser.add_argument('--transport','-t', choices=['epgm','pgm','tcp'], default='epgm', help='Which transport layer to use for inter-node communication.')
         subparsers = parser.add_subparsers(title='cloudfabric-command', dest='cloudfabric')
         install_parser = subparsers.add_parser('install', help='install cloudfabric on the given hosts.')
         install_parser.add_argument('install_hosts', type=str, nargs='*')
@@ -90,7 +89,8 @@ class Cloudfabric(Tailor):
     
     def argparse(self, params):
         self.properties['channel'] = params.channel
-        self.properties['transport'] = params.transport
+        if not self.properties.has_key('transport'):
+            self.properties['transport'] = 'epgm'
         self.properties['urls'] = """client-url=tcp://127.0.0.1:5501
 dbreq-url=tcp://127.0.0.1:5504
 dbrep-url=tcp://127.0.0.1:5505"""
