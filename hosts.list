@@ -6,6 +6,13 @@
 ; tinc this should be the interface for cloudfabric to operate on.
 ;netname = cf
 
+; This option specifies the transport layer cloudfabric should use. 'tcp' only
+; works with exactly 2 nodes. 'pgm' cannot works with arbitary number of nodes,
+; but non-root users cannot send control messages to the cluster. 'epgm', which
+; is recommended, can be used by non-root users and supports arbitary number of
+; nodes.
+;transport = epgm
+
 ; Each server in the cluster gets a section. The name must not have a hyphen or
 ; space in. It may be a domain name.
 ;[node1]
