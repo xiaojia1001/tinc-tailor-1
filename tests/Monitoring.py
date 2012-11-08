@@ -30,10 +30,7 @@ class All(GenieTest):
                 self.assertIsNotNone(host, "Monitor reported a host we could not find")
                 self.assertNotIn(reportedHost['nid'], done_nids, "Monitor reported host %s twice" % reportedHost['nid'])
                 done_nids.append(reportedHost['nid'])
-                try:
-                    self.assertEqual(reportedHost['ip'], host.properties['private_ipv4_address'])
-                except:
-                    self.assertEqual(reportedHost['ip'], gethostbyname(host.properties['connect_to']))
+                self.assertEqual(reportedHost['ip'], host.properties['application_address'])
                 self.assertEqual(reportedHost['cid'], 1)
                 self.assertEqual(str(reportedHost['nid']), host.properties['number'])
                 self.assertEqual(reportedHost['state'], "CONNECTED")
@@ -70,10 +67,7 @@ class Partitioned(GenieTest):
                 self.assertIsNotNone(host, "Monitor reported a host we could not find")
                 self.assertNotIn(reportedHost['nid'], done_nids, "Monitor reported host %s twice" % reportedHost['nid'])
                 done_nids.append(reportedHost['nid'])
-                try:
-                    self.assertEqual(reportedHost['ip'], host.properties['private_ipv4_address'])
-                except:
-                    self.assertEqual(reportedHost['ip'], gethostbyname(host.properties['connect_to']))
+                self.assertEqual(reportedHost['ip'], host.properties['application_address'])
                 self.assertEqual(reportedHost['cid'], 1)
                 self.assertEqual(str(reportedHost['nid']), host.properties['number'])
                 if (controlHost is self.master and host is self.master) or \
@@ -112,7 +106,4 @@ class GDB452(GenieTest):
                 self.assertIsNotNone(host, "Monitor reported a host we could not find")
                 self.assertNotIn(reportedHost['nid'], done_nids, "Monitor reported host %s twice" % reportedHost['nid'])
                 done_nids.append(reportedHost['nid'])
-                try:
-                    self.assertEqual(reportedHost['ip'], host.properties['private_ipv4_address'])
-                except:
-                    self.assertEqual(reportedHost['ip'], gethostbyname(host.properties['connect_to']))
+                self.assertEqual(reportedHost['ip'], host.properties['application_address'])

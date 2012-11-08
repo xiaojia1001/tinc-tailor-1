@@ -328,7 +328,7 @@ class Upgrade(Command):
     
 class Ping(Command):
     def __init__(self, host):
-        super(Ping, self).__init__('ping -c 1 -q '+host.properties['private_ipv4_address'])
+        super(Ping, self).__init__('ping -c 1 -q '+host.properties['application_address'])
     
 class Uninstall(Command):
     def __init__(self, package):
