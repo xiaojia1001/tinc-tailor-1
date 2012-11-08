@@ -96,10 +96,10 @@ dbreq-url=tcp://127.0.0.1:5504
 dbrep-url=tcp://127.0.0.1:5505"""
         if self.properties['transport'] in ('epgm','pgm'):
             self.properties['urls'] += "\npub-url=" + self.properties['transport'] + "://" + self.properties['interface'] + ";224.0.0.1:5502"
-        self.distro_properties['debian'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric exampleclient cloudfabric-mysql libcloudfabric0 database-adapter mysql-server-5.1'}
-        self.distro_properties['ubuntu'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric exampleclient cloudfabric-mysql libcloudfabric0 database-adapter  mysql-server-5.1'}
-        self.distro_properties['redhat'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-lib cloudfabric-mysql mysql-server'}
-        self.distro_properties['centos'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric cloudfabric-database-adapter cloudfabric-client cloudfabric-lib cloudfabric-mysql mysql-server'}
+        self.distro_properties['debian'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric mysql-server-5.1'}
+        self.distro_properties['ubuntu'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric mysql-server-5.1'}
+        self.distro_properties['redhat'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric mysql-server'}
+        self.distro_properties['centos'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric mysql-server'}
         self.params = params
     
     def run(self):
