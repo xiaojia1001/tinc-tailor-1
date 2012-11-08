@@ -51,7 +51,7 @@ class Partitioned(GenieTest):
         for controlHost in self.hosts:
             result, status = self.runScript("monitor", controlHost, False)
         self.partition(self.master)
-        sleep(3)
+        sleep(10)
         for controlHost in self.hosts:
             done_nids=[]
             result, status = self.runScript("monitor", controlHost, False)
