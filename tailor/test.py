@@ -192,6 +192,71 @@ class Test(TestCase):
         self.logger = getLogger('tailor.test.'+self.__class__.__name__)
         self.addTypeEqualityFunc(str, 'assertMultiLineEqual')
         self.maxDiff = None
+        self._partition = None
+        self._shaping = set()
+
+    def partition(self, partitioned_hosts, transport='udp', port=5502):
+        if self._partition is not None:
+            self.fail("Already Partitioned")
+        if isinstance(partitioned_hosts, Host):
+            partitioned_hosts = [partitioned_hosts]
+        complement = []
+        for host in self.hosts:
+            if host not in partitioned_hosts:
+                complement.append(host)
+        self._partition = []
+        for host in self.hosts:
+            if host in partitioned_hosts:
+                others = complement
+            else:
+                others = partitioned_hosts
+            for other in others:
+                if transport in ('tcp', 'udp') and port is not None:
+                    filt = ' --dport {port}'.format(port=port)
+                else:
+                    filt = ''
+                fwrule = "-p {transport} -m {transport} -s {source}{filt} -j REJECT".format(transport=transport, filt=filt, source=other.properties['application_address'])
+                self.logger.debug("Adding firewall rule to '%s': %s", host.hostname, fwrule)
+                host.sync_command("iptables -I INPUT "+fwrule, root=True)
+                self._partition.append((host, fwrule))
+
+    def unpartition(self):
+        if self._partition is None:
+            return
+        for host, fwrule in reversed(self._partition):
+            try:
+                self.logger.debug("Deleting firewall rule from '%s': %s", host.hostname, fwrule)
+                host.sync_command("iptables -D INPUT "+fwrule, root=True)
+            except:
+                print_exception(*exc_info())
+        self._partition = None
+
+    def setHostDelay(self, hosts=None, delay=100):
+        if hosts is None:
+            hosts=self.hosts
+        if isinstance(hosts, Host):
+            hosts = [hosts]
+        for host in hosts:
+            if host in self._shaping:
+                self.logger.debug("removing delay from '%s'", host.hostname)
+                host.sync_command(host.interpolate("tc qdisc del dev {interface} root"), root=True)
+                self._shaping.discard(host)
+            self.logger.debug("Adding %d ms delay to '%s'", delay, host.hostname)
+            host.sync_command(host.interpolate("tc qdisc add dev {interface} root netem delay %dms" % delay), root=True)
+            self._shaping.add(host)
+
+    def clearHostDelay(self, hosts=None):
+        if hosts is None:
+            hosts=self._shaping.copy()
+        if isinstance(hosts, Host):
+            hosts = [hosts]
+        for host in hosts:
+            try:
+                self.logger.debug("removing delay from '%s'", host.hostname)
+                host.sync_command(host.interpolate("tc qdisc del dev {interface} root"), root=True)
+                self._shaping.discard(host)
+            except:
+                print_exception(*exc_info())
     
     def __enter__(self):
         self.setUp()
@@ -251,6 +316,16 @@ class Test(TestCase):
             self.assertEqual(0, status, "Script failed.\nHost: {0}\nScript: {1}\nResult: {2}".format(host.hostname,script, result))
         return result
 
+    def assertScriptFailure(self, script, hosts=None, *args, **kwargs):
+        if hosts is None:
+            hosts = self.hosts
+        if isinstance(hosts, Host):
+            hosts = [hosts]
+        for host in hosts:
+            result, status = self.runScript(script, host, *args, **kwargs)
+            self.assertNotEqual(0, status, "Script succeeded for some reason.\nHost: {0}\nScript: {1}\nResult: {2}".format(host.hostname,script, result))
+        return result
+
     def assertSqlEqual(self, query, desiredResult, hosts=None, msg=None, *args, **kwargs):
         if hosts is None:
             hosts = self.hosts
@@ -295,69 +370,6 @@ class Test(TestCase):
                 self.assertEqual(result, thisResult, msg)
 
 class GenieTest(Test):
-    def __init__(self, *args, **kwargs):
-        super(GenieTest, self).__init__(*args, **kwargs)
-        self._partition = None
-        self._shaping = set()
-
-    def partition(self, partitioned_hosts):
-        if self._partition is not None:
-            self.fail("Already Partitioned")
-        if isinstance(partitioned_hosts, Host):
-            partitioned_hosts = [partitioned_hosts]
-        complement = []
-        for host in self.hosts:
-            if host not in partitioned_hosts:
-                complement.append(host)
-        self._partition = []
-        for host in self.hosts:
-            if host in partitioned_hosts:
-                others = complement
-            else:
-                others = partitioned_hosts
-            for other in others:
-                fwrule = "-p udp -m udp -s {source} --dport 5502 -j REJECT".format(source=other.properties['application_address'])
-                self.logger.debug("Adding firewall rule to '%s': %s", host.hostname, fwrule)
-                host.sync_command("iptables -I INPUT "+fwrule, root=True)
-                self._partition.append((host, fwrule))
-
-    def unpartition(self):
-        if self._partition is None:
-            return
-        for host, fwrule in reversed(self._partition):
-            try:
-                self.logger.debug("Deleting firewall rule from '%s': %s", host.hostname, fwrule)
-                host.sync_command("iptables -D INPUT "+fwrule, root=True)
-            except:
-                print_exception(*exc_info())
-        self._partition = None
-
-    def setHostDelay(self, hosts=None, delay=100):
-        if hosts is None:
-            hosts=self.hosts
-        if isinstance(hosts, Host):
-            hosts = [hosts]
-        for host in hosts:
-            if host in self._shaping:
-                self.logger.debug("removing delay from '%s'", host.hostname)
-                host.sync_command(host.interpolate("tc qdisc del dev {interface} root"), root=True)
-                self._shaping.discard(host)
-            self.logger.debug("Adding %d ms delay to '%s'", delay, host.hostname)
-            host.sync_command(host.interpolate("tc qdisc add dev {interface} root netem delay %dms" % delay), root=True)
-            self._shaping.add(host)
-
-    def clearHostDelay(self, hosts=None):
-        if hosts is None:
-            hosts=self._shaping.copy()
-        if isinstance(hosts, Host):
-            hosts = [hosts]
-        for host in hosts:
-            try:
-                self.logger.debug("removing delay from '%s'", host.hostname)
-                host.sync_command(host.interpolate("tc qdisc del dev {interface} root"), root=True)
-                self._shaping.discard(host)
-            except:
-                print_exception(*exc_info())
 
     def setUp(self):
         super(GenieTest,self).setUp()
