@@ -33,6 +33,8 @@ class Cloudfabric(Tailor):
             Try(Install('{cloudfabric_packages}')),
             Try(Command("{service_command} cloudfabric stop", root=True), DEBUG),
             PutFile(self.get_file('cloudfabric.conf'), '/etc/cloudfabric.conf', True),
+            PutFile(self.get_file('cloudfabric.firewall'), '/etc/cloudfabric.firewall', True),
+            Command("{install_firewall}", root=True),
             Command("{service_command} {mysql_service} start", root=True),
             Try(Command("{install_plugin}", root=True)),
             Command("{service_command} cloudfabric start", root=True),
@@ -98,10 +100,10 @@ dbreq-url=tcp://127.0.0.1:5504
 dbrep-url=tcp://127.0.0.1:5505"""
         if self.properties['transport'] in ('epgm','pgm'):
             self.properties['urls'] += "\npub-url=" + self.properties['transport'] + "://" + self.properties['interface'] + ";224.0.0.1:5502"
-        self.distro_properties['debian'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric mysql-server-5.1', 'disable_selinux_command': 'true'}
-        self.distro_properties['ubuntu'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric mysql-server-5.1', 'disable_selinux_command': 'true'}
-        self.distro_properties['redhat'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric mysql-server', 'disable_selinux_command': 'sed -i s@SELINUX=enforcing@SELINUX=permissive@ /etc/sysconfig/selinux'}
-        self.distro_properties['centos'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric mysql-server', 'disable_selinux_command': 'sed -i s@SELINUX=enforcing@SELINUX=permissive@ /etc/sysconfig/selinux'}
+        self.distro_properties['debian'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric mysql-server-5.1', 'disable_selinux_command': 'true', 'install_firewall':'true'}
+        self.distro_properties['ubuntu'] = {'mysql_service':'mysql', 'install_plugin':'true', 'cloudfabric_packages': 'cloudfabric mysql-server-5.1', 'disable_selinux_command': 'true', 'install_firewall':'true'}
+        self.distro_properties['redhat'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric mysql-server', 'disable_selinux_command': 'sed -i s@SELINUX=enforcing@SELINUX=permissive@ /etc/sysconfig/selinux', 'install_firewall': 'lokkit --custom-rules=/etc/cloudfabric.firewall'}
+        self.distro_properties['centos'] = {'mysql_service':'mysqld', 'install_plugin':"mysql -e \"INSTALL PLUGIN geniedb SONAME 'ha_geniedb.so';\"", 'cloudfabric_packages': 'cloudfabric mysql-server', 'disable_selinux_command': 'sed -i s@SELINUX=enforcing@SELINUX=permissive@ /etc/sysconfig/selinux', 'install_firewall': 'lokkit --custom-rules=/etc/cloudfabric.firewall'}
         self.params = params
     
     def run(self):

@@ -1,0 +1,2 @@
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 5502 -i {interface} -j ACCEPT
+-A INPUT -m state --state NEW -m udp -p udp --dport 5502 -i {interface} -j ACCEPT
