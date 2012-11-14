@@ -78,8 +78,7 @@ command reference
 
 *  `tinc-tailor check`
 
-   This makes every host in `hosts.list` ping every other host by their private
-   address
+   This makes every host in `hosts.list` can ping every other host.
 
 *  `tinc-tailor run COMMAND`
 

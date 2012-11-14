@@ -66,6 +66,10 @@ addition to the usual `python` assertions such as `assertEqual` and
   This function executes the shell script given by *script* on several hosts,
   and asserts that the script returns code 0. *hosts* is interpreted as with
   the above functions.
+* **assertScriptSuccess(*script*, *hosts*=None)**
+
+  This function does exactly as assertScriptSuccess, except that it asserts
+  that an error does occur.
 
 * **assertScriptSame(*script*, *hosts*)**
 
@@ -78,15 +82,15 @@ addition to the usual `python` assertions such as `assertEqual` and
   checks that the output returned by the hosts matches *expected*.
 
 `GenieTest` also provides several functions that are *not* assertions, but
-are vital in constucting powerful tests:
+are vital in constructing powerful tests:
 
 * **runSql(*query*, *host*=None, *database*="", *force*=False)**
 
   This function runs the SQL statements *query* on the given *host*. If *host*
   is not given, it defaults to the first host. If *force*=True, execution does
-  not stop if a statment has an error.
+  not stop if a statement has an error.
 
-  This function returns a tuple of the sql result and a return code (0 for
+  This function returns a tuple of the SQL result and a return code (0 for
   success).
 
 * **runScript(*script*, *host*=None)**
@@ -99,7 +103,7 @@ are vital in constucting powerful tests:
 * **partition(*partitioned_hosts*)**
 
   This function introduces a network split between the hosts in
-  *partitioned_hosts* and those not in it (the split is symetric). A single
+  *partitioned_hosts* and those not in it (the split is symmetric). A single
   Host or a list of Hosts may be given.
 
   Only one partition at a time is allowed.

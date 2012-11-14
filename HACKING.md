@@ -55,7 +55,7 @@ hosts in the list.
 Tests
 -----
 
-There are currently no tests for `tinc-tailor` itself, however it contains a
-naiscent infrastructure for running multinode tests.  These basically have the
-same abilities as a 'Tailor' object, but the interface is a pyunit derived
-class which is much more natural for test-writing.
+There are currently no tests for `tinc-tailor` itself, however it contains an
+infrastructure for running multinode tests.  These basically have the same
+abilities as a 'Tailor' object, but the interface is a pyunit derived class
+which is much more natural for test-writing.
