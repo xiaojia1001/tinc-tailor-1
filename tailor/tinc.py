@@ -23,7 +23,7 @@ class Tinc(Tailor):
             PutFile(self.get_file('tinc.conf'), '/etc/tinc/{netname}/tinc.conf', True),
             PutFile(self.get_file('host.conf'), '/etc/tinc/{netname}/hosts/{hostname}', True),
             Command("tincd -n {netname} -K4096", root=True),
-            GetFile('/etc/tinc/cf/hosts/{hostname}', 'hosts/{hostname}')
+            GetFile('/etc/tinc/{netname}/hosts/{hostname}', 'hosts/{hostname}')
         ]
         if len(hostnames) is 0:
             hosts = self.hosts
