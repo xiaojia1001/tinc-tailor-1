@@ -11,6 +11,7 @@ from errno import ENOENT
 class Tinc(Tailor):
     def install(self, hostnames=[]):
         actions = [
+            Command('{install_firewall}'),
             Try(AddRepos({'redhat':'http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm',
                           'centos':'http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm'})),
             Try(UpdateRepos()),
@@ -75,6 +76,10 @@ class Tinc(Tailor):
     
     def argparse(self, params):
         self.properties['tinc_package'] = 'tinc'
+        self.distro_properties['debian'] = {'install_firewall':'true'}
+        self.distro_properties['ubuntu'] = {'install_firewall':'true'}
+        self.distro_properties['redhat'] = {'install_firewall':'lokkit --port 655:tcp --port 655:udp'}
+        self.distro_properties['centos'] = {'install_firewall':'lokkit --port 655:tcp --port 655:udp'}
         self.params = params
     
     def run(self):
