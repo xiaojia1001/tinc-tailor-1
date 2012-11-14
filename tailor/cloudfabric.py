@@ -120,5 +120,4 @@ dbrep-url=tcp://127.0.0.1:5505"""
             self.upgrade(self.params.upgrade_hosts)
         elif self.params.cloudfabric == 'remove':
             self.remove(self.params.remove_hosts)
-        else:
-            self.refresh()
+        self.refresh()
