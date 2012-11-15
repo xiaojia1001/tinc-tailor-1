@@ -19,7 +19,6 @@ class HealingFixture(GenieTest):
         self.assertSqlSuccess("DROP TABLE IF EXISTS t1;", self.master, database='test')
         self.assertSqlSuccess("CREATE TABLE t1 (c1 INT PRIMARY KEY, c2 INT) ENGINE=GenieDB;", hosts=self.master, database='test')
 
-    @expectedFailure
     def tearDown(self):
         self.runSql("DROP TABLE t1;", self.master, database='test')
         super(HealingFixture,self).tearDown()
@@ -48,7 +47,6 @@ class SingleRecordWithPostWrite(HealingFixture):
 
 class Delete(HealingFixture):
     """Test conflict resolution over single record"""
-    @expectedFailure
     def runTest(self):
         self.assertSqlSuccess("INSERT INTO t1 VALUES (1, RAND()*100000);", hosts=self.master, database='test')
         self.partition(self.master)
@@ -68,7 +66,6 @@ class TableCreate(GenieTest):
         self.slave = self.hosts.hosts[1]
         self.assertSqlSuccess("DROP TABLE IF EXISTS t1;", self.master, database='test')
 
-    @expectedFailure
     def runTest(self):
         self.partition(self.master)
         self.assertSqlSuccess("CREATE TABLE t1 (c1 INT PRIMARY KEY, c2 INT) ENGINE=GenieDB;", hosts=self.master, database='test')
@@ -83,7 +80,6 @@ class TableCreate(GenieTest):
 
 class SingleRecordConflict(HealingFixture):
     """Test conflict resolution over single record"""
-    @expectedFailure
     def runTest(self):
         self.partition(self.master)
         self.assertSqlSuccess("INSERT INTO t1 VALUES (1, RAND()*100000);", database='test')
