@@ -57,7 +57,7 @@ class Cloudfabric(Tailor):
 
     def remove(self, hostnames=[]):
         actions = [
-            Command("{service_command} stop", root=True),
+            Command("{service_command} cloudfabric stop", root=True),
             Uninstall('{cloudfabric_packages}'),
             Try(Rm('/etc/cloudfabric.conf')),
         ]
