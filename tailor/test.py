@@ -388,6 +388,6 @@ class GenieTest(Test):
         self.clearHostDelay()
         self.unpartition()
         self.assertScriptSuccess("""
-        java -cp /usr/share/java/DatabaseAdapter.jar com.sleepycat.je.util.DbDump -h /var/lib/cloudfabric -l | grep '[^$].\$$' | cut -d . -f 1 | xargs -I{} echo rm -rf /var/lib/mysql/{}
+        java -cp /usr/share/java/DatabaseAdapter.jar com.sleepycat.je.util.DbDump -h /var/lib/cloudfabric -l | grep '[^$].\$$' | cut -d . -f 1 | xargs -I{} rm -rf /var/lib/mysql/{}
         """, root=True)
         super(GenieTest,self).tearDown()
